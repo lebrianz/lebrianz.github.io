@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#D6DEE4">
+<title>Lebzy</title>
+<meta name="description" content="Tools by Lebzy for Windows, macOS, Linux and Android. Free to download, no ads.">
+<script>
+/* terapkan tema dan bahasa tersimpan sebelum halaman pertama dicat, supaya tidak berkedip */
+try {
+  var d = document.documentElement;
+  var m = localStorage.getItem("lebzy-theme");
+  if (m === "dark" || m === "light") {
+    d.setAttribute("data-theme", m);
+    document.querySelector('meta[name="theme-color"]').setAttribute("content", m === "dark" ? "#0B0C0E" : "#D6DEE4");
+  }
+  if (localStorage.getItem("lebzy-lang") === "id") d.lang = "id";
+} catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,900;1,900&family=Space+Mono:wght@700&family=Unbounded:wght@800&family=Anton&family=DM+Serif+Display:ital@0;1&family=Rubik+Mono+One&family=Syne:wght@800&display=swap">
+<style>
+/* Tata letak: kepala halaman bergaya poster (nama raksasa yang hurufnya berganti font, pola titik halftone,
+   garis silang oranye yang mengikuti kursor, kotak anotasi dengan koordinat). Di bawahnya katalog: satu baris
+   per tools dengan kubus isometrik kecil, pilihan sistem operasi, dan satu tombol unduh. */
+
+/* token warna didaftarkan supaya perpindahan gelap/terang bisa memudar halus */
+@property --bg        { syntax: "<color>"; inherits: true; initial-value: #D6DEE4; }
+@property --fg        { syntax: "<color>"; inherits: true; initial-value: #0C0D10; }
+@property --muted     { syntax: "<color>"; inherits: true; initial-value: #48505C; }
+@property --line      { syntax: "<color>"; inherits: true; initial-value: #9DA8B3; }
+@property --ctl       { syntax: "<color>"; inherits: true; initial-value: #6B7682; }
+@property --blue      { syntax: "<color>"; inherits: true; initial-value: #1D3BB8; }
+@property --signal    { syntax: "<color>"; inherits: true; initial-value: #FF5B1F; }
+@property --on-signal { syntax: "<color>"; inherits: true; initial-value: #0C0D10; }
+@property --chip      { syntax: "<color>"; inherits: true; initial-value: #C4CED6; }
+@property --rim       { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.7); }
+
+:root {
+  --bg: #D6DEE4;
+  --fg: #0C0D10;
+  --muted: #48505C;
+  --line: #9DA8B3;
+  --ctl: #6B7682;
+  --blue: #1D3BB8;
+  --signal: #FF5B1F;
+  --on-signal: #0C0D10;
+  --chip: #C4CED6;
+  --rim: rgba(255, 255, 255, 0.7);        /* tepi terang kaca */
+
+  --font-display: "Archivo", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* lama fade gelap/terang */
+  --fade: 3s;
+  --ease: cubic-bezier(0.45, 0, 0.55, 1);
+  /* warna memudar halus lewat token terdaftar (@property) */
+  transition:
+    --bg var(--fade) var(--ease), --fg var(--fade) var(--ease), --muted var(--fade) var(--ease),
+    --line var(--fade) var(--ease), --ctl var(--fade) var(--ease), --blue var(--fade) var(--ease),
+    --signal var(--fade) var(--ease), --on-signal var(--fade) var(--ease), --chip var(--fade) var(--ease),
+    --rim var(--fade) var(--ease);
+
+  color-scheme: light;
+}
+/* Fade gelap/terang dilakukan lewat token warna yang hidup (bukan View Transitions).
+   View Transitions memotret halaman lama menjadi gambar diam; saat halaman di-scroll, gambar itu tidak ikut
+   bergeser sementara halaman baru bergeser, sehingga teks tampak dobel/bertumpuk dan transisinya patah.
+   Dengan token hidup, hanya ada satu salinan halaman yang warnanya memudar sambil tetap ikut scroll. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B0C0E;
+    --fg: #ECECE8;
+    --muted: #9AA0AA;
+    --line: #2A2D33;
+    --ctl: #5C616B;
+    --blue: #8196FF;
+    --signal: #FF6A2B;
+    --chip: #191B1F;
+    --rim: rgba(255, 255, 255, 0.2);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B0C0E;
+  --fg: #ECECE8;
+  --muted: #9AA0AA;
+  --line: #2A2D33;
+  --ctl: #5C616B;
+  --blue: #8196FF;
+  --signal: #FF6A2B;
+  --chip: #191B1F;
+  --rim: rgba(255, 255, 255, 0.2);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  overflow-x: clip;                      /* tidak ada geser samping di layar sempit */
+  -webkit-tap-highlight-color: transparent;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+/* latar interaktif di bawah hero: kisi tanda "+" yang bereaksi pada kursor (gaya berbeda dari titik di hero) */
+body { isolation: isolate; }
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  display: block;
+  pointer-events: none;
+}
+/* butiran film tipis di seluruh halaman */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.07;
+  transform: translateZ(0);
+  will-change: transform;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+
+.wrap {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  /* env(safe-area-*) menjaga isi dari poni/notch saat hp dimiringkan */
+  padding-inline: max(16px, 4vw, env(safe-area-inset-left, 0px)) max(16px, 4vw, env(safe-area-inset-right, 0px));
+}
+.caps {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Bilah atas: kaca cair yang mengambang dan menempel di atas saat halaman di-scroll */
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-block: 10px;
+  pointer-events: none;                 /* area kosong di sekitar kapsul tidak menghalangi klik */
+}
+html { scroll-padding-top: 5.5rem; }
+.top {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.55rem 0.65rem 0.55rem 1.4rem;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
+  background: color-mix(in srgb, var(--bg) 16%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.9) brightness(1.06);
+  backdrop-filter: blur(14px) saturate(1.9) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 var(--rim),                                    /* tepi atas yang memantulkan cahaya */
+    inset 0 -1px 0 color-mix(in srgb, var(--rim) 35%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--rim) 22%, transparent),
+    0 12px 32px rgba(0, 0, 0, 0.16),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .top { background: color-mix(in srgb, var(--bg) 90%, transparent); }
+}
+/* kilau yang mengikuti kursor + pantulan lembut di sisi atas kapsul */
+.top::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(200px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--rim) 70%, transparent), transparent 65%),
+    linear-gradient(180deg, color-mix(in srgb, var(--rim) 38%, transparent), transparent 55%);
+}
+.top::before { opacity: 1; }
+.top-dots {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+}
+.top > .mark, .top > .ctrls { position: relative; z-index: 2; }
+.top .mark {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.ctrls { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.top .seg {
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg) 8%, transparent);
+}
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--ctl);
+  border-radius: 2px;
+}
+.seg button {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  padding: 0.45rem 0.8rem;
+  min-height: 34px;
+  border-radius: 1px;
+  cursor: pointer;
+}
+/* pilihan tema mengambang di pojok kanan bawah */
+.theme-fab {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right, 0px));
+  bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  z-index: 60;
+}
+.seg button:hover { background: color-mix(in srgb, var(--fg) 10%, transparent); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+/* Kepala halaman */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-block: 1px solid var(--fg);
+  touch-action: pan-y;
+}
+.hero canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 0.3rem 0.45rem;
+  color: var(--on-signal);
+  background: var(--signal);
+  will-change: transform;
+}
+.vert {
+  position: absolute;
+  z-index: 1;
+  top: 1.5rem;
+  right: max(10px, 1.4vw);
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg);
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2rem, 5vw, 3.5rem);
+  pointer-events: none;
+}
+.eyebrow { margin: 0 0 1.25rem; color: var(--muted); }
+
+/* Nama: tiap huruf menempati sel lebar tetap, jadi pergantian font tidak menggeser tata letak */
+h1 {
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125;
+  font-weight: 850;
+  font-size: clamp(3.2rem, 17vw, 14rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+h1 .ch {
+  display: block;
+  flex: none;
+  width: 0.9em;
+  height: 0.95em;
+  text-align: center;
+}
+h1 .ch > span {
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 0.95;
+}
+.reg {
+  flex: none;
+  margin: 0.08em 0 0 0.04em;
+  font-size: 0.2em;
+  font-weight: 500;
+  font-stretch: 100%;
+  font-variation-settings: "wdth" 100;
+  letter-spacing: 0;
+  line-height: 1;
+  color: var(--signal);
+}
+.slogan {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: clamp(1rem, 2.5vw, 1.75rem) 0 0;
+  max-width: 44rem;
+  color: var(--fg);
+}
+.slogan i {
+  position: relative;
+  flex: 1 1 2rem;
+  height: 1px;
+  background: var(--fg);
+}
+.slogan i::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  background: var(--fg);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.75rem;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+.stats b { color: var(--fg); font-weight: 500; }
+
+/* Katalog */
+.catalog { padding-block: clamp(2rem, 5vw, 3.5rem) 3.5rem; }
+.catalog-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+.catalog-head .caps { margin: 0 0 0.6rem; color: var(--muted); }
+h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125;
+  font-weight: 800;
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.search { width: min(100%, 20rem); }
+.search input {
+  width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--ctl);
+  border-radius: 2px;
+  padding: 0.7rem 0.9rem;
+  min-height: 44px;
+}
+.search input::placeholder { color: var(--muted); }
+.search input:hover { border-color: var(--fg); }
+.search input:focus-visible { outline-offset: 1px; border-color: var(--signal); }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0 1.5rem;
+  padding: 0;
+  list-style: none;
+}
+.chip, .os button {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--ctl);
+  border-radius: 2px;
+  padding: 0.35rem 0.8rem;
+  min-height: 36px;
+  cursor: pointer;
+}
+.chip:hover, .os button:hover { border-color: var(--fg); }
+.chip[aria-pressed="true"], .os button[aria-pressed="true"] {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--fg);
+}
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr) minmax(0, 17.5rem);
+  align-items: start;
+  gap: 1rem 2rem;
+  padding: 1.6rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+/* kotak anotasi di keempat sudut saat disorot */
+.row::before {
+  content: "";
+  position: absolute;
+  inset: 6px 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background:
+    linear-gradient(var(--signal), var(--signal)) left top / 14px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left top / 1.5px 14px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right top / 14px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right top / 1.5px 14px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left bottom / 14px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left bottom / 1.5px 14px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right bottom / 14px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right bottom / 1.5px 14px no-repeat;
+}
+.row:hover::before, .row:focus-within::before { opacity: 1; }
+
+.glyph { width: 5rem; height: 5rem; display: block; }
+.glyph .g-line { fill: none; stroke: var(--fg); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; }
+.glyph .g-faint { stroke-opacity: 0.45; }
+.glyph .g-ink { fill: none; stroke: var(--blue); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.glyph .g-dot { fill: var(--blue); stroke: none; }
+
+.info { min-width: 0; }
+.id { margin: 0 0 0.35rem; color: var(--muted); }
+.row h3 {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.75rem;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-variation-settings: "wdth" 125;
+  font-weight: 750;
+  font-size: clamp(1.15rem, 2.6vw, 1.55rem);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+.tag {
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-variation-settings: normal;
+  font-weight: 400;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: 1px dashed var(--muted);
+  padding: 0.1rem 0.4rem;
+}
+.row p.desc {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  max-width: 38rem;
+  text-wrap: pretty;
+}
+
+.get { min-width: 0; }
+.os { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.7rem; }
+.os-one { margin: 0 0 0.7rem; color: var(--muted); }
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 1rem;
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-variation-settings: "wdth" 112;
+  font-weight: 750;
+  font-size: 0.9375rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--on-signal);
+  background: var(--signal);
+  border: 1px solid var(--signal);
+  border-radius: 2px;
+}
+.btn:hover { filter: brightness(1.07); }
+.btn svg { width: 1.1rem; height: 1.1rem; flex: none; transition: transform 0.15s; }
+.btn:hover svg { transform: translateY(2px); }
+.fine { margin: 0.55rem 0 0; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.04em; }
+.sum { margin-top: 0.4rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+.sum summary { cursor: pointer; width: fit-content; letter-spacing: 0.04em; }
+.sum summary:hover { color: var(--fg); }
+.sum code { display: block; margin-top: 0.4rem; overflow-wrap: anywhere; user-select: all; color: var(--fg); }
+
+.empty { padding: 3rem 0; color: var(--muted); border-bottom: 1px solid var(--line); }
+
+/* Catatan dan kaki halaman */
+.note {
+  border-top: 1px solid var(--fg);
+  padding-block: 2rem 2.5rem;
+}
+.note .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem clamp(1.5rem, 5vw, 4rem);
+  align-items: start;
+}
+.note h2 { font-size: clamp(1.1rem, 2.4vw, 1.5rem); grid-column: 1 / -1; }
+.justify {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: justify;
+  hyphens: auto;
+}
+.cmd {
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.9rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  border: 1px solid var(--ctl);
+  border-radius: 2px;
+}
+.cmd b { display: inline-block; min-width: 5.5rem; font-weight: 500; color: var(--muted); }
+
+footer {
+  border-top: 1px solid var(--fg);
+  padding-block: 1.5rem calc(4.5rem + env(safe-area-inset-bottom, 0px));   /* ruang untuk pilihan tema mengambang */
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+footer .wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+}
+footer ul { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+footer a { text-underline-offset: 3px; }
+footer a:hover { color: var(--fg); }
+
+/* Kaca cair untuk semua tombol bertulisan: latar (kisi titik interaktif) di belakangnya diburamkan sedikit
+   supaya teks tetap terbaca. Isinya sengaja sangat bening; yang membuatnya terlihat seperti kaca adalah
+   kilau diagonal, pantulan di tepi, dan sedikit sorotan di dalam sisi atas. */
+.seg, .chip, .os button, .search input, .btn {
+  -webkit-backdrop-filter: blur(8px) saturate(1.8) brightness(1.06);
+  backdrop-filter: blur(8px) saturate(1.8) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 var(--rim),                                                    /* pantulan tepi atas */
+    inset 1px 0 0 color-mix(in srgb, var(--rim) 45%, transparent),               /* tepi kiri */
+    inset -1px 0 0 color-mix(in srgb, var(--rim) 25%, transparent),              /* tepi kanan */
+    inset 0 -1px 0 color-mix(in srgb, var(--fg) 8%, transparent),                /* bayangan tipis di bawah */
+    inset 0 10px 14px -10px color-mix(in srgb, var(--rim) 80%, transparent),     /* sorotan lembut di dalam */
+    0 6px 18px rgba(0, 0, 0, 0.08);
+}
+.seg, .chip, .os button, .search input {
+  border-color: color-mix(in srgb, var(--fg) 14%, transparent);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--rim) 60%, transparent) 0%,
+      color-mix(in srgb, var(--rim) 8%, transparent) 38%,
+      transparent 62%,
+      color-mix(in srgb, var(--rim) 22%, transparent) 100%),
+    color-mix(in srgb, var(--bg) 10%, transparent);
+}
+.chip, .os button { border-radius: 2px; }
+.search input { border-radius: 2px; }
+/* Tombol unduh: kaca bening dengan aksen oranye (garis di kiri, tepi, ikon, dan semburat warna), bukan blok oranye penuh.
+   Teksnya memakai warna tema sehingga terbaca di mode gelap maupun terang. */
+.btn {
+  border-radius: 2px;
+  color: var(--fg);
+  border-color: color-mix(in srgb, var(--signal) 55%, transparent);
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--signal) 24%, transparent), color-mix(in srgb, var(--signal) 4%, transparent) 75%),
+    linear-gradient(135deg, color-mix(in srgb, var(--rim) 55%, transparent) 0%, transparent 45%),
+    color-mix(in srgb, var(--bg) 8%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--rim),
+    inset 3px 0 0 var(--signal),
+    inset 0 0 0 100px transparent,
+    0 6px 22px color-mix(in srgb, var(--signal) 12%, transparent);
+  transition: border-color 0.2s, box-shadow 0.25s;
+}
+.btn svg { color: var(--signal); }
+.btn:hover {
+  filter: none;
+  border-color: color-mix(in srgb, var(--signal) 90%, transparent);
+  box-shadow:
+    inset 0 1px 0 var(--rim),
+    inset 3px 0 0 var(--signal),
+    inset 0 0 0 100px color-mix(in srgb, var(--signal) 14%, transparent),
+    0 8px 28px color-mix(in srgb, var(--signal) 26%, transparent);
+}
+.btn:active { transform: translateY(1px); }
+.chip:hover, .os button:hover { border-color: var(--fg); }
+.chip[aria-pressed="true"], .os button[aria-pressed="true"] {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg) 28%, transparent), transparent 55%),
+    color-mix(in srgb, var(--fg) 88%, transparent);
+  border-color: var(--fg);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg) 35%, transparent), 0 4px 14px rgba(0, 0, 0, 0.14);
+}
+/* di dalam kapsul header (yang sudah memburamkan latar) cukup diberi warna, tanpa blur kedua */
+.top .seg {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--rim) 70%, transparent);
+}
+
+/* Kotak keterangan tiap aplikasi: panel kaca tipis. Lapisannya berupa ::after (bukan latar baris itu sendiri)
+   supaya blur tombol di dalamnya tetap bekerja dan tidak terkurung oleh baris. */
+.row { isolation: isolate; }
+.row::after {
+  content: "";
+  position: absolute;
+  inset: 6px 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--fg) 7%, transparent);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--rim) 30%, transparent), transparent 45%),
+    color-mix(in srgb, var(--bg) 14%, transparent);
+  -webkit-backdrop-filter: blur(5px) saturate(1.3);
+  backdrop-filter: blur(5px) saturate(1.3);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--rim) 70%, transparent);
+  transition: background-color 0.2s;
+}
+.row:hover::after { background-color: color-mix(in srgb, var(--bg) 24%, transparent); }
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .seg, .chip, .os button, .search input { background: color-mix(in srgb, var(--bg) 88%, transparent); }
+  .btn { background: color-mix(in srgb, var(--signal) 20%, var(--bg)); }
+  .row::after { background: color-mix(in srgb, var(--bg) 70%, transparent); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .seg, .chip, .os button, .search input { background: color-mix(in srgb, var(--bg) 92%, transparent); }
+  .btn { background: color-mix(in srgb, var(--signal) 20%, var(--bg)); }
+  .row::after { background: color-mix(in srgb, var(--bg) 80%, transparent); }
+  .seg, .chip, .os button, .search input, .btn, .row::after { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (max-width: 760px) {
+  .row { grid-template-columns: 4rem minmax(0, 1fr); padding: 1.3rem 0.5rem; gap: 0.9rem 1rem; }
+  .glyph { width: 4rem; height: 4rem; }
+  .get { grid-column: 1 / -1; }
+  .note .wrap { grid-template-columns: minmax(0, 1fr); }
+  .vert { display: none; }
+
+  .catalog-head { align-items: stretch; }
+  .search { width: 100%; }
+  .justify { text-align: left; hyphens: none; }
+  .os button { flex: 1 1 auto; }
+}
+@media (max-width: 560px) {
+  .site-head { padding-block: 8px; }
+  .top { padding: 0.4rem 0.45rem 0.4rem 1rem; }
+  html { scroll-padding-top: 4.5rem; }
+  .seg button { padding-inline: 0.65rem; }
+
+  .hero-inner { padding-block: 1.75rem 2rem; }
+  .eyebrow { margin-bottom: 1rem; }
+  h1 { font-size: clamp(3rem, 18vw, 14rem); }
+  .slogan { gap: 0.6rem; font-size: 0.6875rem; letter-spacing: 0.06em; }
+  .slogan i { flex: 1 1 1rem; min-width: 1rem; }
+  .stats { gap: 0.35rem 1.1rem; margin-top: 1.1rem; }
+
+  /* chip kategori: satu baris yang bisa digeser, tidak memakan banyak tinggi layar */
+  .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: calc(-1 * max(16px, 4vw));
+    padding-inline: max(16px, 4vw);
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .chips::-webkit-scrollbar { display: none; }
+  .chips li { flex: none; }
+  .chip { white-space: nowrap; }
+
+  .cmd { font-size: 0.75rem; padding: 0.8rem; }
+  .cmd b { min-width: 4.5rem; }
+  footer .wrap { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 380px) {
+  .row { grid-template-columns: 3.25rem minmax(0, 1fr); gap: 0.8rem; }
+  .glyph { width: 3.25rem; height: 3.25rem; }
+  .btn { padding-inline: 0.8rem; font-size: 0.875rem; }
+}
+/* layar sentuh: target ketuk minimal 44px, dan tidak ada efek hover yang "menempel" setelah diketuk */
+@media (pointer: coarse) {
+  .chip, .os button { min-height: 44px; }
+  .seg button { min-height: 38px; }
+  .sum summary { padding-block: 0.5rem; }
+}
+@media (hover: none) {
+  .row:hover::before { opacity: 0; }
+  .row:focus-within::before { opacity: 1; }
+  .seg button:not([aria-pressed="true"]):hover { background: transparent; }
+  .btn:hover { filter: none; }
+  .btn:hover svg { transform: none; }
+}
+/* hp dimiringkan: hero tidak perlu terlalu tinggi */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hero-inner { padding-block: 1.25rem; }
+  h1 { font-size: clamp(2.5rem, 12vh, 6rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  :root { transition: none; }
+  .row::before, .btn svg { transition: none; }
+}
+</style>
+</head>
+<body>
+<canvas class="grid-bg" id="grid" aria-hidden="true"></canvas>
+
+<div class="wrap site-head">
+  <div class="top" id="top">
+    <canvas class="top-dots" id="topDots" aria-hidden="true"></canvas>
+    <a class="mark" href="#atas" id="atas">Lebzy&reg;</a>
+    <div class="ctrls">
+      <div class="seg" id="langSeg" role="group" data-i18n-aria="lang" aria-label="Language">
+        <button type="button" data-lang="en" lang="en">EN</button>
+        <button type="button" data-lang="id" lang="id">ID</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header class="hero" id="hero">
+  <canvas id="dots" aria-hidden="true"></canvas>
+  <div class="pin" id="pin" aria-hidden="true">( 0 . 0 )</div>
+  <p class="vert" aria-hidden="true" data-i18n="vert">&copy; 2026 Lebzy &mdash; Tool archive</p>
+  <div class="wrap hero-inner">
+    <p class="eyebrow caps" id="eyebrow">Tool catalog</p>
+    <h1 id="word" aria-label="Lebzy"><span class="ch" aria-hidden="true"><span>L</span></span><span class="ch" aria-hidden="true"><span>E</span></span><span class="ch" aria-hidden="true"><span>B</span></span><span class="ch" aria-hidden="true"><span>Z</span></span><span class="ch" aria-hidden="true"><span>Y</span></span><sup class="reg" aria-hidden="true">&reg;</sup></h1>
+    <p class="slogan caps"><span data-i18n="sloganL">Software</span><i aria-hidden="true"></i><span id="sloganR">Windows / macOS / Linux</span></p>
+    <ul class="stats caps" id="stats"></ul>
+  </div>
+</header>
+
+<main class="wrap catalog" id="tools">
+  <div class="catalog-head">
+    <div>
+      <p class="caps" data-i18n="catalog">Catalog</p>
+      <h2 data-i18n="allTools">All tools</h2>
+    </div>
+    <div class="search">
+      <label for="q" hidden data-i18n="searchLabel">Search tools</label>
+      <input id="q" type="search" data-i18n-ph="search" placeholder="Search by name or purpose" autocomplete="off">
+    </div>
+  </div>
+  <ul class="chips" id="chips"></ul>
+  <ol class="list" id="list"></ol>
+  <p class="empty" id="empty" hidden data-i18n="empty">No tools match. Try another word or choose All.</p>
+</main>
+
+<section class="note" aria-labelledby="cek">
+  <div class="wrap">
+    <h2 id="cek" data-i18n="noteTitle">Check the file before opening</h2>
+    <p class="justify" data-i18n="noteText">These tools are free. Pick your operating system, download, and run. Small apps are often flagged by Windows or macOS as coming from an unknown publisher. That is expected, but compare the file's SHA-256 checksum with the one shown on this page before you open it.</p>
+    <pre class="cmd"><b>Windows</b>certutil -hashfile FILE_NAME SHA256
+<b>macOS</b>shasum -a 256 FILE_NAME
+<b>Linux</b>sha256sum FILE_NAME</pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span data-i18n="foot">&copy; 2026 Lebzy. All tools are free to use.</span>
+    <ul id="links"></ul>
+  </div>
+</footer>
+
+<div class="seg theme-fab" id="themeSeg" role="group" data-i18n-aria="theme" aria-label="Theme">
+  <button type="button" data-mode="both" data-i18n="themeBoth">Both</button>
+  <button type="button" data-mode="dark" data-i18n="themeDark">Dark</button>
+  <button type="button" data-mode="light" data-i18n="themeLight">Light</button>
+</div>
+
+<script>
+/* ============================================================
+   ISI DI SINI
+   Ganti contoh di bawah dengan tools kamu sendiri.
+   Tiap tools punya:
+     nama      : nama tools
+     deskripsi : teks biasa (dipakai untuk semua bahasa) ATAU { en: "...", id: "..." }
+     versi     : misalnya "1.2.0"
+     unduhan   : satu entri per sistem operasi (Windows, macOS, Linux, Android, atau nama lain)
+                 file   : link langsung ke file (misalnya dari GitHub Releases)
+                 ukuran : teks bebas, misalnya "2,1 MB"
+                 sha256 : opsional, hapus barisnya kalau tidak dipakai
+     contoh    : hapus baris "contoh: true" supaya label Example/Contoh hilang
+   ============================================================ */
+const TOOLS = [
+  {
+    nama: "Batch Renamer",
+    deskripsi: {
+      en: "Rename hundreds of files at once with a pattern you control, with a preview before anything changes.",
+      id: "Ganti nama ratusan file sekaligus dengan pola yang bisa diatur, lengkap dengan pratinjau sebelum diterapkan."
+    },
+    versi: "1.2.0",
+    unduhan: {
+      "Windows": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/batch-renamer-win.zip", ukuran: "2.1 MB", sha256: "0000000000000000000000000000000000000000000000000000000000000000" },
+      "macOS":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/batch-renamer-mac.dmg", ukuran: "2.6 MB" },
+      "Linux":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/batch-renamer-linux.AppImage", ukuran: "3.0 MB" }
+    },
+    contoh: true
+  },
+  {
+    nama: "Catat Cepat",
+    deskripsi: {
+      en: "A one-screen notes app. Open it, type, done. No account and no internet needed.",
+      id: "Aplikasi catatan satu layar. Buka, ketik, selesai, tanpa akun dan tanpa internet."
+    },
+    versi: "0.9.4",
+    unduhan: {
+      "Android": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/catat-cepat.apk", ukuran: "8.4 MB" }
+    },
+    contoh: true
+  },
+  {
+    nama: "Pemisah PDF",
+    deskripsi: {
+      en: "Split one PDF into several files by page number, right on your computer.",
+      id: "Pecah satu PDF menjadi beberapa file berdasarkan nomor halaman, langsung dari komputer kamu."
+    },
+    versi: "1.0.1",
+    unduhan: {
+      "Windows": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/pemisah-pdf-win.zip", ukuran: "5.7 MB" },
+      "macOS":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/pemisah-pdf-mac.dmg", ukuran: "6.1 MB" }
+    },
+    contoh: true
+  },
+  {
+    nama: "Log Rapih",
+    deskripsi: {
+      en: "A terminal script that tidies and sorts long log files into a summary that is easy to read.",
+      id: "Skrip terminal yang merapikan dan mengurutkan file log panjang menjadi ringkasan yang mudah dibaca."
+    },
+    versi: "2.0.0",
+    unduhan: {
+      "macOS": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/log-rapih-mac.tar.gz", ukuran: "148 KB" },
+      "Linux": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/log-rapih-linux.tar.gz", ukuran: "142 KB" }
+    },
+    contoh: true
+  },
+  {
+    nama: "Palet Warna",
+    deskripsi: {
+      en: "Pull the five dominant colors from any image and copy their hex codes with one click.",
+      id: "Ambil lima warna dominan dari gambar apa pun dan salin kode hex-nya dengan satu klik."
+    },
+    versi: "1.1.0",
+    unduhan: {
+      "Windows": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/palet-warna-win.zip", ukuran: "3.0 MB" },
+      "macOS":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/palet-warna-mac.dmg", ukuran: "3.3 MB" }
+    },
+    contoh: true
+  }
+];
+
+const LINKS = [
+  { label: "GitHub", href: "https://github.com/lebrianz" }
+];
+/* ============================================================ */
+
+(function () {
+  var root = document.documentElement;
+  var OS_ORDER = ["Windows", "macOS", "Linux", "Android"];
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- Teks dua bahasa ---------- */
+  var STR = {
+    en: {
+      theme: "Theme", themeBoth: "Both", themeDark: "Dark", themeLight: "Light", lang: "Language",
+      catalogTool: "Tool catalog", device: "Your device",
+      vert: "© 2026 Lebzy — Tool archive",
+      sloganL: "Software",
+      sTools: "tools", sPlatforms: "platforms", sAds: "ads",
+      catalog: "Catalog", allTools: "All tools", searchLabel: "Search tools",
+      search: "Search by name or purpose", filter: "Filter by operating system", all: "All",
+      empty: "No tools match. Try another word or choose All.",
+      dl: "Download for {os}", only: "Only for {os}",
+      ariaDl: "Download {name} for {os}", ariaOs: "Choose operating system for {name}",
+      example: "Example",
+      noteTitle: "Check the file before opening",
+      noteText: "These tools are free. Pick your operating system, download, and run. Small apps are often flagged by Windows or macOS as coming from an unknown publisher. That is expected, but compare the file's SHA-256 checksum with the one shown on this page before you open it.",
+      foot: "© 2026 Lebzy. All tools are free to use."
+    },
+    id: {
+      theme: "Tema", themeBoth: "Keduanya", themeDark: "Gelap", themeLight: "Terang", lang: "Bahasa",
+      catalogTool: "Katalog tools", device: "Perangkatmu",
+      vert: "© 2026 Lebzy — Arsip tools",
+      sloganL: "Perangkat lunak",
+      sTools: "tools", sPlatforms: "platform", sAds: "iklan",
+      catalog: "Katalog", allTools: "Semua tools", searchLabel: "Cari tools",
+      search: "Cari nama atau fungsi", filter: "Filter sistem operasi", all: "Semua",
+      empty: "Tidak ada tools yang cocok. Coba kata lain atau pilih Semua.",
+      dl: "Unduh untuk {os}", only: "Hanya untuk {os}",
+      ariaDl: "Unduh {name} untuk {os}", ariaOs: "Pilih sistem operasi untuk {name}",
+      example: "Contoh",
+      noteTitle: "Cek file sebelum dibuka",
+      noteText: "Tools di sini gratis. Pilih sistem operasimu, unduh, lalu jalankan. Aplikasi kecil sering ditandai Windows atau macOS berasal dari penerbit tidak dikenal. Itu wajar, tapi cocokkan dulu checksum SHA-256 file dengan yang tertulis di halaman ini sebelum membukanya.",
+      foot: "© 2026 Lebzy. Semua tools gratis dipakai."
+    }
+  };
+  var lang = "en";
+  try { if (localStorage.getItem("lebzy-lang") === "id") lang = "id"; } catch (e) {}
+  function t(key, vars) {
+    var s = (STR[lang] && STR[lang][key]) || STR.en[key] || key;
+    if (vars) for (var k in vars) s = s.split("{" + k + "}").join(vars[k]);
+    return s;
+  }
+
+  /* ---------- Util ---------- */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function pad(n) { return ("00" + n).slice(-3); }
+  function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h; }
+  function osRank(a, b) {
+    var ia = OS_ORDER.indexOf(a), ib = OS_ORDER.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  }
+  function osList(tool) { return Object.keys(tool.unduhan || {}).sort(osRank); }
+  function allOS() {
+    var seen = {};
+    TOOLS.forEach(function (tool) { osList(tool).forEach(function (o) { seen[o] = true; }); });
+    return Object.keys(seen).sort(osRank);
+  }
+  function ext(url) {
+    var name = String(url).split("?")[0].split("/").pop() || "";
+    var m = name.match(/\.(tar\.gz|[a-z0-9]+)$/i);
+    return m ? "." + m[1].toLowerCase() : "";
+  }
+  function descOf(tool) {
+    var d = tool.deskripsi;
+    if (!d) return "";
+    if (typeof d === "string") return d;
+    return d[lang] || d.en || d.id || "";
+  }
+  function detectOS() {
+    var ua = navigator.userAgent || "";
+    var p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+    if (/android/i.test(ua)) return "Android";
+    if (/iphone|ipad|ipod/i.test(ua)) return null;
+    if (/win/i.test(p) || /windows/i.test(ua)) return "Windows";
+    if (/mac/i.test(p) || /macintosh|mac os x/i.test(ua)) return "macOS";
+    if (/linux|x11|cros/i.test(p + " " + ua)) return "Linux";
+    return null;
+  }
+  var myOS = detectOS();
+
+  /* ---------- Nama LEBZY: font tiap huruf berganti saat kursor bergerak ---------- */
+  var FACES = [
+    { f: '"Archivo"', fb: "sans-serif", w: 850, st: "normal", vs: '"wdth" 125', sx: "125%", sz: 1, ls: "-0.03em" },
+    { f: '"Archivo"', fb: "sans-serif", w: 200, st: "normal", vs: '"wdth" 62', sx: "62%", sz: 1.04, ls: "0" },
+    { f: '"Playfair Display"', fb: "serif", w: 900, st: "italic", vs: "normal", sx: "100%", sz: 1, ls: "0" },
+    { f: '"Playfair Display"', fb: "serif", w: 900, st: "normal", vs: "normal", sx: "100%", sz: 0.98, ls: "0" },
+    { f: '"Space Mono"', fb: "monospace", w: 700, st: "normal", vs: "normal", sx: "100%", sz: 0.9, ls: "0" },
+    { f: '"Unbounded"', fb: "sans-serif", w: 800, st: "normal", vs: "normal", sx: "100%", sz: 0.8, ls: "0" },
+    { f: '"Anton"', fb: "sans-serif", w: 400, st: "normal", vs: "normal", sx: "100%", sz: 1.08, ls: "0" },
+    { f: '"DM Serif Display"', fb: "serif", w: 400, st: "italic", vs: "normal", sx: "100%", sz: 1.02, ls: "0" },
+    { f: '"Rubik Mono One"', fb: "monospace", w: 400, st: "normal", vs: "normal", sx: "100%", sz: 0.78, ls: "0" },
+    { f: '"Syne"', fb: "sans-serif", w: 800, st: "normal", vs: "normal", sx: "100%", sz: 0.95, ls: "0" },
+    { f: '"IBM Plex Mono"', fb: "monospace", w: 500, st: "normal", vs: "normal", sx: "100%", sz: 0.9, ls: "0" }
+  ];
+  var cells = Array.prototype.slice.call(document.querySelectorAll("#word .ch > span"));
+  var lastFace = [];
+  function scramble() {
+    var pool = [];
+    FACES.forEach(function (f, i) { if (f.ok) pool.push(i); });
+    if (pool.length < 2) return;
+    cells.forEach(function (c, k) {
+      var i, tries = 0;
+      do { i = pool[Math.floor(Math.random() * pool.length)]; tries++; } while (i === lastFace[k] && tries < 8);
+      lastFace[k] = i;
+      var f = FACES[i], s = c.style;
+      s.fontFamily = f.f + "," + f.fb;
+      s.fontWeight = f.w;
+      s.fontStyle = f.st;
+      s.fontStretch = f.sx;
+      s.fontVariationSettings = f.vs;
+      s.fontSize = f.sz + "em";
+      s.letterSpacing = f.ls;
+    });
+  }
+  (function loadFaces() {
+    if (!(document.fonts && document.fonts.load)) {
+      FACES.forEach(function (f) { f.ok = true; });
+      scramble();
+      return;
+    }
+    var jobs = FACES.map(function (f) {
+      var spec = (f.st === "italic" ? "italic " : "") + f.w + " 1em " + f.f;
+      return document.fonts.load(spec, "LEBZY").then(function (r) { f.ok = !!(r && r.length); }, function () {});
+    });
+    Promise.all(jobs).then(scramble);
+  })();
+  /* Laju pengacakan mengikuti kecepatan kursor: pelan = jarang berganti, cepat = berganti rapat.
+     Kursor berhenti = font berhenti berganti. */
+  if (!reduce) {
+    var SLOW = 40, FAST = 2200;          /* px per detik: batas bawah dan atas pemetaan */
+    var MAX_GAP = 700, MIN_GAP = 45;     /* jeda antar pengacakan (ms) saat pelan dan saat cepat */
+    var vel = 0, px = null, py = 0, pt = 0, lastMove = 0, lastScr = 0, scrRaf = 0;
+    var scrTick = function (now) {
+      scrRaf = 0;
+      var idle = now - lastMove;
+      if (idle > 160) return;            /* kursor berhenti */
+      if (idle > 60) vel *= 0.9;         /* tidak ada event baru, kecepatan meluruh */
+      var k = Math.min(1, Math.max(0, (vel - SLOW) / (FAST - SLOW)));
+      var gap = MAX_GAP * Math.pow(MIN_GAP / MAX_GAP, Math.sqrt(k));
+      if (now - lastScr >= gap) { lastScr = now; scramble(); }
+      scrRaf = requestAnimationFrame(scrTick);
+    };
+    window.addEventListener("pointermove", function (e) {
+      var now = performance.now();
+      if (px !== null) {
+        var dt = Math.max(1, now - pt);
+        var inst = Math.sqrt((e.clientX - px) * (e.clientX - px) + (e.clientY - py) * (e.clientY - py)) / dt * 1000;
+        vel = vel * 0.75 + inst * 0.25;
+      }
+      px = e.clientX; py = e.clientY; pt = now; lastMove = now;
+      if (!scrRaf) scrRaf = requestAnimationFrame(scrTick);
+    }, { passive: true });
+    window.addEventListener("pointerdown", scramble, { passive: true });
+  }
+
+  /* ---------- Kepala halaman: titik halftone, garis silang, kotak anotasi ---------- */
+  var canvas = document.getElementById("dots");
+  var ctx = canvas.getContext("2d");
+  var hero = document.getElementById("hero");
+  var pin = document.getElementById("pin");
+  var W = 0, H = 0, dpr = 1;
+  var pointer = { x: 0, y: 0, on: false };
+  var cur = { x: -1, y: -1 };
+  var running = false, visible = true;
+  var C = { ink: "29,59,184", signal: "255,91,31", muted: "72,80,92", core: "255,230,214" };
+
+  /* membaca "#rrggbb", "rgb(...)" atau "color(srgb ...)" menjadi "r,g,b" */
+  function toRGB(v, fallback) {
+    v = (v || "").trim();
+    if (!v) return fallback;
+    if (v.charAt(0) === "#") {
+      var m = /^#([0-9a-f]{6})$/i.exec(v);
+      if (!m) return fallback;
+      var n = parseInt(m[1], 16);
+      return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255);
+    }
+    var nums = v.match(/-?\d*\.?\d+/g);
+    if (!nums || nums.length < 3) return fallback;
+    var scale = /^color\(/i.test(v) ? 255 : 1;
+    return [0, 1, 2].map(function (i) { return Math.round(parseFloat(nums[i]) * scale); }).join(",");
+  }
+  function readColors() {
+    var cs = getComputedStyle(root);
+    C.ink = toRGB(cs.getPropertyValue("--blue"), C.ink);
+    C.signal = toRGB(cs.getPropertyValue("--signal"), C.signal);
+    C.muted = toRGB(cs.getPropertyValue("--muted"), C.muted);
+  }
+
+  function resize() {
+    var r = hero.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function smooth(a, b, x) {
+    var k = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return k * k * (3 - 2 * k);
+  }
+  function idleTarget(time) {
+    return {
+      x: W * (0.68 + 0.14 * Math.sin(time * 0.00031)),
+      y: H * (0.5 + 0.26 * Math.sin(time * 0.00043 + 1.2))
+    };
+  }
+  function glow(x, y, rad, a) {
+    var g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, "rgba(" + C.signal + "," + a + ")");
+    g.addColorStop(1, "rgba(" + C.signal + ",0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+  }
+
+  function draw(time) {
+    readColors();
+    var tgt = pointer.on ? pointer : idleTarget(time);
+    if (cur.x < 0 || reduce) { cur.x = tgt.x; cur.y = tgt.y; }
+    else { cur.x += (tgt.x - cur.x) * 0.14; cur.y += (tgt.y - cur.y) * 0.14; }
+    var cx = cur.x, cy = cur.y;
+
+    ctx.clearRect(0, 0, W, H);
+
+    var step = W < 560 ? 12 : 14;
+    var maxR = step * 0.52;
+    var cols = Math.ceil(W / step) + 1, rows = Math.ceil(H / step) + 1;
+    var base = new Path2D(), ink = new Path2D();
+    for (var j = 0; j < rows; j++) {
+      for (var i = 0; i < cols; i++) {
+        var x = i * step + (j % 2 ? step / 2 : 0), y = j * step;
+        base.moveTo(x + 0.8, y); base.arc(x, y, 0.8, 0, 6.2832);
+        var s = Math.sin(x * 0.0065 + time * 0.00035) + Math.sin(y * 0.0075 - time * 0.0003) +
+                Math.sin((x + y) * 0.0042 + time * 0.0002) + Math.sin(Math.sqrt(x * x * 0.5 + y * y) * 0.0085 - time * 0.0004);
+        var n = (s / 4 + 1) / 2;
+        var dx = x - cx, dy = y - cy, d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 190) n += (1 - d / 190) * 0.32;
+        n *= 0.38 + 0.62 * smooth(W * 0.04, W * 0.55, x);
+        var r = maxR * Math.pow(smooth(0.5, 0.86, n), 1.15);
+        if (r > 0.6) { ink.moveTo(x + r, y); ink.arc(x, y, r, 0, 6.2832); }
+      }
+    }
+    ctx.fillStyle = "rgba(" + C.muted + ",0.38)";
+    ctx.fill(base);
+    ctx.fillStyle = "rgba(" + C.ink + ",0.78)";
+    ctx.fill(ink);
+
+    var ys = [[cy, 1], [cy - H * 0.34, 0.42], [cy + H * 0.34, 0.42]];
+    ctx.save();
+    ctx.shadowColor = "rgb(" + C.signal + ")";
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = "rgb(" + C.signal + ")";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+    ys.forEach(function (p) {
+      if (p[0] < 0 || p[0] > H) return;
+      ctx.globalAlpha = p[1];
+      ctx.beginPath(); ctx.moveTo(0, p[0]); ctx.lineTo(W, p[0]); ctx.stroke();
+    });
+    ctx.restore();
+    ctx.strokeStyle = "rgb(" + C.core + ")";
+    ctx.lineWidth = 0.7;
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H);
+    ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    ys.forEach(function (p) {
+      if (p[0] < 0 || p[0] > H) return;
+      glow(cx, p[0], p[1] === 1 ? 70 : 44, p[1] === 1 ? 0.6 : 0.4);
+    });
+
+    ctx.strokeStyle = "rgb(" + C.signal + ")";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - 11, cy - 11, 22, 22);
+    var pw = pin.offsetWidth || 90, ph = pin.offsetHeight || 20;
+    var lx = cx + 64, ly = cy - 64;
+    if (lx + pw > W - 8) lx = cx - 64 - pw;
+    if (ly < ph) ly = cy + 64;
+    var fromRight = lx > cx;
+    var ax = fromRight ? lx : lx + pw;
+    ctx.beginPath();
+    ctx.moveTo(cx + (fromRight ? 11 : -11), cy + (ly < cy ? -11 : 11));
+    ctx.lineTo(ax, ly);
+    ctx.stroke();
+    pin.style.transform = "translate(" + lx.toFixed(1) + "px," + (ly - ph / 2).toFixed(1) + "px)";
+    var label = "( " + Math.round(cx) + " . " + Math.round(cy) + " )";
+    if (pin.textContent !== label) pin.textContent = label;
+  }
+
+  var lastDraw = 0;
+  function loop(time) {
+    if (!running) return;
+    /* di layar kecil gambar ulang ~30 fps: hemat baterai dan tidak berat di hp kelas menengah */
+    if (W < 560 && time - lastDraw < 30) { requestAnimationFrame(loop); return; }
+    lastDraw = time;
+    draw(time);
+    requestAnimationFrame(loop);
+  }
+  function start() {
+    if (reduce || running || !visible) return;
+    running = true;
+    requestAnimationFrame(loop);
+  }
+  function stop() { running = false; }
+  function once() { draw(2400); }
+
+  resize();
+  once();
+  window.addEventListener("resize", function () { resize(); if (!running) once(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { resize(); if (!running) once(); });
+
+  if (!reduce) {
+    hero.addEventListener("pointermove", function (e) {
+      var r = hero.getBoundingClientRect();
+      pointer.x = e.clientX - r.left;
+      pointer.y = e.clientY - r.top;
+      pointer.on = true;
+    });
+    var tapTimer = 0;
+    function holdTouch() { clearTimeout(tapTimer); tapTimer = setTimeout(function () { pointer.on = false; }, 2500); }
+    hero.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "touch") return;
+      var r = hero.getBoundingClientRect();
+      pointer.x = e.clientX - r.left;
+      pointer.y = e.clientY - r.top;
+      pointer.on = true;
+      clearTimeout(tapTimer);
+    });
+    hero.addEventListener("pointerup", function (e) { if (e.pointerType === "touch") holdTouch(); });
+    hero.addEventListener("pointercancel", function (e) { if (e.pointerType === "touch") holdTouch(); });
+    hero.addEventListener("pointerleave", function (e) { if (e.pointerType !== "touch") pointer.on = false; });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(function (entries) {
+        visible = entries[0].isIntersecting;
+        if (visible) start(); else stop();
+      }).observe(hero);
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) stop(); else start();
+    });
+    start();
+  }
+
+  /* ---------- Latar bawah hero: kisi tanda "+" yang membesar, berputar jadi "x" dan menyala di dekat kursor.
+     Gayanya sengaja berbeda dari hero (titik bulat biru + garis silang oranye): di sini tanda tipis satu warna
+     netral, cincin putus-putus mengikuti kursor, dan ketukan/klik memancarkan gelombang. Kisi menempel pada
+     halaman sehingga ikut bergulir; hero sendiri tidak digambari. Hanya menggambar saat ada yang bergerak. ---------- */
+  (function () {
+    var cv = document.getElementById("grid");
+    if (!cv || !cv.getContext) return;
+    var g = cv.getContext("2d");
+    var heroEl = document.getElementById("hero");
+    var gw = 0, gh = 0, STEP = 28, R = 170, small = false;
+    var tgt = { x: -9999, y: -9999 }, cur = { x: -9999, y: -9999 };
+    var power = 0, powerTgt = 0;
+    var ripples = [];
+    var col = { ctl: "107,118,130", sig: "255,91,31" };
+    var raf = 0, activeUntil = 0, lastT = 0, holdTimer = 0;
+
+    function readCols() {
+      var cs = getComputedStyle(root);
+      col.ctl = toRGB(cs.getPropertyValue("--ctl"), col.ctl);
+      col.sig = toRGB(cs.getPropertyValue("--signal"), col.sig);
+    }
+    function kick(ms) {
+      if (ms) activeUntil = Math.max(activeUntil, performance.now() + ms);
+      if (!raf) raf = requestAnimationFrame(frame);
+    }
+    function size() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      gw = cv.clientWidth; gh = cv.clientHeight;
+      cv.width = Math.round(gw * dpr);
+      cv.height = Math.round(gh * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      small = gw < 560;
+      STEP = small ? 24 : 28;
+      R = small ? 130 : 170;
+      kick();
+    }
+    function release() { powerTgt = 0; kick(); }
+    function hold(e) {
+      clearTimeout(holdTimer);
+      if (e.pointerType === "touch") holdTimer = setTimeout(release, 2500);
+    }
+
+    function draw(now) {
+      g.clearRect(0, 0, gw, gh);
+      var hb = Math.max(0, heroEl.getBoundingClientRect().bottom);
+      if (hb >= gh) return;
+      readCols();
+      var sy = window.pageYOffset || 0;
+      g.save();
+      g.beginPath(); g.rect(0, hb, gw, gh - hb); g.clip();
+
+      var cols = Math.ceil(gw / STEP) + 1;
+      var r0 = Math.floor((sy + hb) / STEP) - 1, r1 = Math.ceil((sy + gh) / STEP) + 1;
+      var base = new Path2D(), near = [];
+      var a0 = 2.4;
+      for (var j = r0; j <= r1; j++) {
+        var y = j * STEP - sy;
+        if (y < hb - STEP || y > gh + STEP) continue;
+        for (var i = 0; i < cols; i++) {
+          var x = STEP / 2 + i * STEP;
+          var f = 0;
+          if (power > 0.01) {
+            var dx = x - cur.x, dy = y - cur.y, d = Math.sqrt(dx * dx + dy * dy);
+            if (d < R) { var t = 1 - d / R; f = t * t * (3 - 2 * t) * power; }
+          }
+          for (var k = 0; k < ripples.length; k++) {
+            var rp = ripples[k], age = now - rp.t;
+            var rx = x - rp.x, ry = y - rp.y;
+            var dr = Math.abs(Math.sqrt(rx * rx + ry * ry) - age * 0.55);
+            if (dr < 64) { var q = 1 - dr / 64; f += q * q * (1 - age / 1500) * 0.95; }
+          }
+          if (f > 1) f = 1;
+          if (f < 0.02) {
+            base.moveTo(x - a0, y); base.lineTo(x + a0, y);
+            base.moveTo(x, y - a0); base.lineTo(x, y + a0);
+          } else near.push(x, y, f);
+        }
+      }
+      g.lineWidth = 1;
+      g.lineCap = "butt";
+      g.strokeStyle = "rgba(" + col.ctl + ",0.34)";
+      g.stroke(base);
+
+      g.strokeStyle = "rgb(" + col.sig + ")";
+      for (var n = 0; n < near.length; n += 3) {
+        var nx = near[n], ny = near[n + 1], nf = near[n + 2];
+        var arm = a0 + 6.5 * nf, ang = nf * Math.PI / 4;
+        var c = Math.cos(ang) * arm, s = Math.sin(ang) * arm;
+        g.globalAlpha = 0.28 + 0.62 * nf;
+        g.lineWidth = 1 + 0.6 * nf;
+        g.beginPath();
+        g.moveTo(nx - c, ny - s); g.lineTo(nx + c, ny + s);
+        g.moveTo(nx + s, ny - c); g.lineTo(nx - s, ny + c);
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+
+      if (power > 0.02) {
+        g.strokeStyle = "rgba(" + col.sig + "," + (0.5 * power).toFixed(3) + ")";
+        g.lineWidth = 1;
+        g.setLineDash([2, 6]);
+        g.beginPath(); g.arc(cur.x, cur.y, R * 0.62, 0, 6.2832); g.stroke();
+        g.setLineDash([]);
+      }
+      g.restore();
+    }
+
+    function frame(now) {
+      raf = 0;
+      if (small && now - lastT < 30) { raf = requestAnimationFrame(frame); return; }
+      var dt = Math.min(64, now - (lastT || now - 16));
+      lastT = now;
+      if (cur.x < -999) { cur.x = tgt.x; cur.y = tgt.y; }
+      var ke = 1 - Math.exp(-dt / 70);
+      cur.x += (tgt.x - cur.x) * ke;
+      cur.y += (tgt.y - cur.y) * ke;
+      power += (powerTgt - power) * (1 - Math.exp(-dt / 160));
+      for (var i = ripples.length - 1; i >= 0; i--) if (now - ripples[i].t > 1500) ripples.splice(i, 1);
+      draw(now);
+      if (Math.abs(tgt.x - cur.x) > 0.4 || Math.abs(tgt.y - cur.y) > 0.4 ||
+          Math.abs(power - powerTgt) > 0.005 || ripples.length || now < activeUntil) {
+        raf = requestAnimationFrame(frame);
+      }
+    }
+
+    size();
+    window.addEventListener("resize", size);
+    window.addEventListener("scroll", function () { kick(); }, { passive: true });
+    window.addEventListener("load", function () { kick(); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { kick(); });
+    /* warna ikut memudar saat tema berganti */
+    new MutationObserver(function () { kick(reduce ? 0 : 3400); }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
+    if (!reduce) {
+      window.addEventListener("pointermove", function (e) {
+        tgt.x = e.clientX; tgt.y = e.clientY; powerTgt = 1; hold(e); kick();
+      }, { passive: true });
+      window.addEventListener("pointerdown", function (e) {
+        tgt.x = e.clientX; tgt.y = e.clientY; powerTgt = 1;
+        if (cur.x < -999) { cur.x = tgt.x; cur.y = tgt.y; }
+        if (ripples.length < 4) ripples.push({ x: e.clientX, y: e.clientY, t: performance.now() });
+        hold(e); kick();
+      }, { passive: true });
+      window.addEventListener("pointerup", hold, { passive: true });
+      window.addEventListener("pointercancel", hold, { passive: true });
+      window.addEventListener("pointerout", function (e) {
+        if (!e.relatedTarget && e.pointerType === "mouse") release();
+      });
+      window.addEventListener("blur", release);
+    }
+  })();
+
+  /* ---------- Bilah atas (kaca cair): titik interaktif di dalam kapsul. Titik kecil membesar dan menyala di dekat
+     kursor sambil sedikit menjauh dari kursor (efek lensa), dan melayang pelan saat halaman di-scroll. Kilau kaca
+     mengikuti kursor lewat variabel CSS --mx/--my. Digambar hanya saat ada yang bergerak. ---------- */
+  (function () {
+    var bar = document.getElementById("top");
+    var cv = document.getElementById("topDots");
+    if (!bar || !cv || !cv.getContext) return;
+    var g = cv.getContext("2d");
+    var gw = 0, gh = 0, STEP = 9, R = 110;
+    var tgt = { x: -9999, y: -9999 }, cur = { x: -9999, y: -9999 };
+    var power = 0, powerTgt = 0;
+    var raf = 0, activeUntil = 0, lastT = 0, holdTimer = 0;
+    var col = { fg: "12,13,16", blue: "29,59,184", sig: "255,91,31" };
+
+    function readCols() {
+      var cs = getComputedStyle(root);
+      col.fg = toRGB(cs.getPropertyValue("--fg"), col.fg);
+      col.blue = toRGB(cs.getPropertyValue("--blue"), col.blue);
+      col.sig = toRGB(cs.getPropertyValue("--signal"), col.sig);
+    }
+    function kick(ms) {
+      if (ms) activeUntil = Math.max(activeUntil, performance.now() + ms);
+      if (!raf) raf = requestAnimationFrame(frame);
+    }
+    function size() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      gw = cv.clientWidth; gh = cv.clientHeight;
+      cv.width = Math.round(gw * dpr);
+      cv.height = Math.round(gh * dpr);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      kick();
+    }
+    function release() { powerTgt = 0; bar.style.setProperty("--mx", "50%"); bar.style.setProperty("--my", "0%"); kick(); }
+    function hold(e) {
+      clearTimeout(holdTimer);
+      if (e.pointerType === "touch") holdTimer = setTimeout(release, 2200);
+    }
+    function track(e) {
+      var r = cv.getBoundingClientRect();
+      var dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+      var dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+      var near = Math.sqrt(dx * dx + dy * dy) < R;
+      tgt.x = e.clientX; tgt.y = e.clientY;
+      if (cur.x < -999) { cur.x = tgt.x; cur.y = tgt.y; }
+      if (near) {
+        bar.style.setProperty("--mx", (e.clientX - r.left).toFixed(0) + "px");
+        bar.style.setProperty("--my", (e.clientY - r.top).toFixed(0) + "px");
+      }
+      if (near || power > 0.005) { powerTgt = near ? 1 : 0; kick(); }
+    }
+
+    function draw() {
+      g.clearRect(0, 0, gw, gh);
+      readCols();
+      var rect = cv.getBoundingClientRect();
+      var ox = cur.x - rect.left, oy = cur.y - rect.top;
+      var drift = ((window.pageYOffset || 0) * 0.22) % STEP;       /* titik melayang pelan saat scroll */
+      var cols = Math.ceil(gw / STEP) + 1, rows = Math.ceil(gh / STEP) + 2;
+      var base = new Path2D(), near = [];
+      for (var j = 0; j < rows; j++) {
+        var y = j * STEP - drift;
+        for (var i = 0; i < cols; i++) {
+          var x = i * STEP + STEP / 2;
+          var f = 0, dx = x - ox, dy = y - oy;
+          if (power > 0.01) {
+            var d = Math.sqrt(dx * dx + dy * dy);
+            if (d < R) { var t = 1 - d / R; f = t * t * (3 - 2 * t) * power; }
+          }
+          if (f < 0.03) { base.moveTo(x + 0.8, y); base.arc(x, y, 0.8, 0, 6.2832); }
+          else near.push(x, y, f, dx, dy);
+        }
+      }
+      g.fillStyle = "rgba(" + col.fg + ",0.2)";
+      g.fill(base);
+      for (var n = 0; n < near.length; n += 5) {
+        var f2 = near[n + 2], ddx = near[n + 3], ddy = near[n + 4];
+        var dd = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+        var px = near[n] + ddx / dd * f2 * 6, py = near[n + 1] + ddy / dd * f2 * 6;   /* menjauh dari kursor */
+        var rr = 0.8 + 2.4 * f2;
+        g.fillStyle = "rgba(" + (f2 > 0.62 ? col.sig : col.blue) + "," + (0.3 + 0.65 * f2).toFixed(3) + ")";
+        g.beginPath(); g.arc(px, py, rr, 0, 6.2832); g.fill();
+      }
+    }
+
+    function frame(now) {
+      raf = 0;
+      var dt = Math.min(64, now - (lastT || now - 16));
+      lastT = now;
+      var ke = 1 - Math.exp(-dt / 60);
+      cur.x += (tgt.x - cur.x) * ke;
+      cur.y += (tgt.y - cur.y) * ke;
+      power += (powerTgt - power) * (1 - Math.exp(-dt / 140));
+      draw();
+      if (Math.abs(tgt.x - cur.x) > 0.4 || Math.abs(tgt.y - cur.y) > 0.4 ||
+          Math.abs(power - powerTgt) > 0.005 || now < activeUntil) {
+        raf = requestAnimationFrame(frame);
+      }
+    }
+
+    size();
+    window.addEventListener("resize", size);
+    window.addEventListener("scroll", function () { kick(); }, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(size);
+    new MutationObserver(function () { kick(reduce ? 0 : 3400); }).observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
+    if (!reduce) {
+      window.addEventListener("pointermove", function (e) { track(e); hold(e); }, { passive: true });
+      window.addEventListener("pointerdown", function (e) { track(e); hold(e); }, { passive: true });
+      window.addEventListener("pointerup", hold, { passive: true });
+      window.addEventListener("pointercancel", hold, { passive: true });
+      window.addEventListener("pointerout", function (e) {
+        if (!e.relatedTarget && e.pointerType === "mouse") release();
+      });
+      window.addEventListener("blur", release);
+    }
+  })();
+
+  /* ---------- Tema: Both (bergantian dengan fade), Dark, Light ---------- */
+  var HOLD = 9000;               /* jarak antar pergantian, dalam ms; durasi fade ada di CSS (--fade) */
+  var MODES = ["both", "dark", "light"];
+  var mode = "both";
+  try { var sm = localStorage.getItem("lebzy-theme"); if (MODES.indexOf(sm) !== -1) mode = sm; } catch (e) {}
+  var cycleTimer = null;
+  var themeSeg = document.getElementById("themeSeg");
+
+  function systemDark() { return window.matchMedia("(prefers-color-scheme: dark)").matches; }
+  function currentTheme() { return root.getAttribute("data-theme") || (systemDark() ? "dark" : "light"); }
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function paintTheme(v) {
+    root.setAttribute("data-theme", v);
+    if (themeMeta) themeMeta.setAttribute("content", v === "dark" ? "#0B0C0E" : "#D6DEE4");
+    if (!running) once();
+  }
+  /* Tidak memakai View Transitions: perpindahan warna ditangani transition token di CSS,
+     jadi tetap mulus walau halaman sedang di-scroll. */
+  function setTheme(v) {
+    if (root.getAttribute("data-theme") !== v) paintTheme(v);
+  }
+  function scheduleCycle() {
+    clearTimeout(cycleTimer);
+    cycleTimer = setTimeout(function () {
+      if (mode !== "both") return;
+      if (!document.hidden) setTheme(currentTheme() === "dark" ? "light" : "dark", true);
+      scheduleCycle();
+    }, HOLD);
+  }
+  function applyMode(m, save) {
+    mode = m;
+    if (save) { try { localStorage.setItem("lebzy-theme", m); } catch (e) {} }
+    clearTimeout(cycleTimer);
+    if (m === "both") {
+      setTheme(currentTheme(), false);
+      if (!reduce) scheduleCycle();      /* dengan reduced motion, Both mengikuti tema sistem tanpa bergantian */
+    } else {
+      setTheme(m, !!save);
+    }
+    Array.prototype.forEach.call(themeSeg.querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.mode === m));
+    });
+  }
+  themeSeg.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-mode]");
+    if (b) applyMode(b.dataset.mode, true);
+  });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+    if (mode === "both" && reduce) setTheme(systemDark() ? "dark" : "light");
+  });
+
+  /* ---------- Katalog ---------- */
+  var listEl = document.getElementById("list");
+  var chipsEl = document.getElementById("chips");
+  var emptyEl = document.getElementById("empty");
+  var qEl = document.getElementById("q");
+  var statsEl = document.getElementById("stats");
+  var eyebrowEl = document.getElementById("eyebrow");
+  var sloganR = document.getElementById("sloganR");
+  var activeOS = "all";
+  var chosen = {};
+
+  var ARROW = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M8 1.5v9M4 7.5l4 4 4-4M2.5 14.5h11"/></svg>';
+
+  function glyph(name) {
+    var k = hash(name) % 5;
+    var s = '<svg class="glyph" viewBox="0 0 64 64" aria-hidden="true" focusable="false">';
+    s += '<path class="g-line" d="M32 5 56 19v28L32 61 8 47V19Z"/>';
+    s += '<path class="g-line g-faint" d="M8 19 32 33 56 19M32 33v28"/>';
+    var cx = 32, cy = 34, i, x, y, h;
+    if (k === 0) {
+      for (i = 1; i <= 3; i++) s += '<circle class="g-ink" cx="' + cx + '" cy="' + cy + '" r="' + (i * 4) + '"/>';
+    } else if (k === 1) {
+      for (x = 21; x <= 43; x += 2.75) {
+        h = Math.sqrt(Math.max(0, 144 - (x - cx) * (x - cx)));
+        s += '<path class="g-ink" d="M' + x + ' ' + (cy - h).toFixed(1) + 'V' + (cy + h).toFixed(1) + '"/>';
+      }
+    } else if (k === 2) {
+      for (y = 22; y <= 46; y += 4.5) for (x = 20; x <= 44; x += 4.5) {
+        if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= 150) s += '<circle class="g-dot" cx="' + x + '" cy="' + y + '" r="1.25"/>';
+      }
+    } else if (k === 3) {
+      var d = "M19 " + cy;
+      for (i = 0; i < 6; i++) d += "L" + (19 + (i + 1) * 4.2).toFixed(1) + " " + (cy + (i % 2 ? 9 : -9));
+      s += '<path class="g-ink" d="' + d + '"/>';
+    } else {
+      for (i = 0; i < 14; i++) {
+        var a = i * Math.PI * 2 / 14;
+        s += '<path class="g-ink" d="M' + (cx + Math.cos(a) * 4).toFixed(1) + ' ' + (cy + Math.sin(a) * 4).toFixed(1) +
+             'L' + (cx + Math.cos(a) * 14).toFixed(1) + ' ' + (cy + Math.sin(a) * 14).toFixed(1) + '"/>';
+      }
+    }
+    return s + "</svg>";
+  }
+
+  function startOS(tool) {
+    var list = osList(tool);
+    if (chosen[tool.nama] && list.indexOf(chosen[tool.nama]) !== -1) return chosen[tool.nama];
+    if (activeOS !== "all" && list.indexOf(activeOS) !== -1) return activeOS;
+    if (myOS && list.indexOf(myOS) !== -1) return myOS;
+    return list[0];
+  }
+
+  function buildRow(tool, index) {
+    var li = el("li", "row");
+    var list = osList(tool);
+
+    var g = el("div");
+    g.innerHTML = glyph(tool.nama);
+    li.appendChild(g.firstChild);
+
+    var info = el("div", "info");
+    info.appendChild(el("p", "id caps", "LBZ-" + pad(index + 1) + " / v" + tool.versi));
+    var h = el("h3", null, tool.nama);
+    if (tool.contoh) h.appendChild(el("span", "tag", t("example")));
+    info.appendChild(h);
+    info.appendChild(el("p", "desc", descOf(tool)));
+    li.appendChild(info);
+
+    var get = el("div", "get");
+    var btn = el("a", "btn");
+    btn.rel = "noopener";
+    var fine = el("p", "fine");
+    var sumHost = el("div");
+    var buttons = [];
+
+    function select(os) {
+      chosen[tool.nama] = os;
+      var d = tool.unduhan[os];
+      btn.href = d.file;
+      btn.setAttribute("aria-label", t("ariaDl", { name: tool.nama, os: os }));
+      btn.innerHTML = "<span></span>" + ARROW;
+      btn.firstChild.textContent = t("dl", { os: os });
+      fine.textContent = [os, "v" + tool.versi, d.ukuran, ext(d.file)].filter(Boolean).join("  /  ");
+      sumHost.textContent = "";
+      if (d.sha256) {
+        var det = el("details", "sum");
+        det.appendChild(el("summary", null, "SHA-256"));
+        det.appendChild(el("code", null, d.sha256));
+        sumHost.appendChild(det);
+      }
+      buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.os === os)); });
+    }
+
+    if (list.length > 1) {
+      var seg = el("div", "os");
+      seg.setAttribute("role", "group");
+      seg.setAttribute("aria-label", t("ariaOs", { name: tool.nama }));
+      list.forEach(function (os) {
+        var b = el("button", null, os);
+        b.type = "button";
+        b.dataset.os = os;
+        b.addEventListener("click", function () { select(os); });
+        buttons.push(b);
+        seg.appendChild(b);
+      });
+      get.appendChild(seg);
+    } else {
+      get.appendChild(el("p", "os-one caps", t("only", { os: list[0] })));
+    }
+    get.appendChild(btn);
+    get.appendChild(fine);
+    get.appendChild(sumHost);
+    li.appendChild(get);
+
+    select(startOS(tool));
+    return li;
+  }
+
+  function renderList() {
+    var q = qEl.value.trim().toLowerCase();
+    listEl.textContent = "";
+    var shown = 0;
+    TOOLS.forEach(function (tool, i) {
+      var list = osList(tool);
+      if (!list.length) return;
+      var okOS = activeOS === "all" || list.indexOf(activeOS) !== -1;
+      var hay = (tool.nama + " " + descOf(tool) + " " + list.join(" ")).toLowerCase();
+      if (okOS && (!q || hay.indexOf(q) !== -1)) {
+        listEl.appendChild(buildRow(tool, i));
+        shown++;
+      }
+    });
+    emptyEl.hidden = shown !== 0;
+  }
+
+  function renderChips() {
+    chipsEl.textContent = "";
+    chipsEl.setAttribute("aria-label", t("filter"));
+    [{ id: "all", label: t("all") }].concat(allOS().map(function (o) { return { id: o, label: o }; })).forEach(function (c) {
+      var li = document.createElement("li");
+      var b = el("button", "chip", c.label);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(c.id === activeOS));
+      b.addEventListener("click", function () {
+        activeOS = c.id;
+        chosen = {};
+        renderChips();
+        renderList();
+      });
+      li.appendChild(b);
+      chipsEl.appendChild(li);
+    });
+  }
+
+  function renderHero() {
+    statsEl.textContent = "";
+    [[String(TOOLS.length), t("sTools")], [String(allOS().length), t("sPlatforms")], ["0", t("sAds")]].forEach(function (it) {
+      var li = document.createElement("li");
+      var b = document.createElement("b");
+      b.textContent = it[0];
+      li.appendChild(b);
+      li.appendChild(document.createTextNode(" " + it[1]));
+      statsEl.appendChild(li);
+    });
+    eyebrowEl.textContent = t("catalogTool") + (myOS ? "  /  " + t("device") + ": " + myOS : "");
+    sloganR.textContent = allOS().join(" / ");
+  }
+
+  function renderLinks() {
+    var ul = document.getElementById("links");
+    LINKS.forEach(function (l) {
+      var li = document.createElement("li");
+      var a = el("a", null, l.label);
+      a.href = l.href;
+      a.rel = "noopener";
+      li.appendChild(a);
+      ul.appendChild(li);
+    });
+  }
+
+  /* ---------- Bahasa ---------- */
+  var langSeg = document.getElementById("langSeg");
+  function applyLang(l, save) {
+    lang = l;
+    root.lang = l;
+    if (save) { try { localStorage.setItem("lebzy-lang", l); } catch (e) {} }
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-ph]"), function (n) { n.placeholder = t(n.getAttribute("data-i18n-ph")); });
+    Array.prototype.forEach.call(document.querySelectorAll("[data-i18n-aria]"), function (n) { n.setAttribute("aria-label", t(n.getAttribute("data-i18n-aria"))); });
+    Array.prototype.forEach.call(langSeg.querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.lang === l));
+    });
+    renderHero();
+    renderChips();
+    renderList();
+  }
+  langSeg.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-lang]");
+    if (b) applyLang(b.dataset.lang, true);
+  });
+
+  qEl.addEventListener("input", renderList);
+  renderLinks();
+  applyLang(lang, false);
+  applyMode(mode, false);
+})();
+</script>
+</body>
+</html>
