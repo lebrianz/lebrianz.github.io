@@ -518,9 +518,8 @@ h2 {
   text-wrap: pretty;
 }
 
-.get { min-width: 0; }
-.os { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.7rem; }
-.os-one { margin: 0 0 0.7rem; color: var(--muted); }
+.get { min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.dl { min-width: 0; }
 .btn {
   display: flex;
   align-items: center;
@@ -858,11 +857,13 @@ footer a:hover { color: var(--fg); }
                  file   : link langsung ke file (misalnya dari GitHub Releases)
                  ukuran : teks bebas, misalnya "2,1 MB"
                  sha256 : opsional, hapus barisnya kalau tidak dipakai
+     kategori  : "software" (Software & Tools), "plugin" (Plug in & DCTL), atau "luts" (LUTs)
      contoh    : hapus baris "contoh: true" supaya label Example/Contoh hilang
    ============================================================ */
 const TOOLS = [
   {
     nama: "Labzync",
+    kategori: "software",
     deskripsi: {
       en: "Synchronize your multicam footage.",
       id: "Sinkronisasi footage multicam anda."
@@ -874,6 +875,7 @@ const TOOLS = [
   },
   {
     nama: "GriddddLabz",
+    kategori: "software",
     deskripsi: {
       en: "Make grids from photos or videos, as many as you want.",
       id: "Buat grid dari foto dan video sebanyak yang kamu mau."
@@ -903,8 +905,10 @@ const LINKS = [
       sloganL: "Software",
       sTools: "tools", sPlatforms: "platforms", sAds: "ads",
       catalog: "Catalog", allTools: "All tools", searchLabel: "Search tools",
-      search: "Search by name or purpose", filter: "Filter by operating system", all: "All",
-      empty: "No tools match. Try another word or choose All.",
+      search: "Search by name or purpose", filter: "Filter by category", all: "All",
+      catAll: "All Tools", catSoftware: "Software & Tools", catPlugin: "Plug in & DCTL", catLuts: "LUTs",
+      empty: "No tools match. Try another word or choose All Tools.",
+      emptyCat: "Nothing in this category yet.",
       dl: "Download for {os}", only: "Only for {os}",
       ariaDl: "Download {name} for {os}", ariaOs: "Choose operating system for {name}",
       example: "Example",
@@ -919,8 +923,10 @@ const LINKS = [
       sloganL: "Perangkat lunak",
       sTools: "tools", sPlatforms: "platform", sAds: "iklan",
       catalog: "Katalog", allTools: "Semua tools", searchLabel: "Cari tools",
-      search: "Cari nama atau fungsi", filter: "Filter sistem operasi", all: "Semua",
-      empty: "Tidak ada tools yang cocok. Coba kata lain atau pilih Semua.",
+      search: "Cari nama atau fungsi", filter: "Filter kategori", all: "Semua",
+      catAll: "Semua Tools", catSoftware: "Software & Tools", catPlugin: "Plug in & DCTL", catLuts: "LUTs",
+      empty: "Tidak ada tools yang cocok. Coba kata lain atau pilih Semua Tools.",
+      emptyCat: "Belum ada isi di kategori ini.",
       dl: "Unduh untuk {os}", only: "Hanya untuk {os}",
       ariaDl: "Unduh {name} untuk {os}", ariaOs: "Pilih sistem operasi untuk {name}",
       example: "Contoh",
@@ -1567,8 +1573,7 @@ const LINKS = [
   var statsEl = document.getElementById("stats");
   var eyebrowEl = document.getElementById("eyebrow");
   var sloganR = document.getElementById("sloganR");
-  var activeOS = "all";
-  var chosen = {};
+  var activeCat = "all";
 
   var ARROW = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" aria-hidden="true"><path d="M8 1.5v9M4 7.5l4 4 4-4M2.5 14.5h11"/></svg>';
 
@@ -1603,17 +1608,21 @@ const LINKS = [
     return s + "</svg>";
   }
 
-  function startOS(tool) {
-    var list = osList(tool);
-    if (chosen[tool.nama] && list.indexOf(chosen[tool.nama]) !== -1) return chosen[tool.nama];
-    if (activeOS !== "all" && list.indexOf(activeOS) !== -1) return activeOS;
-    if (myOS && list.indexOf(myOS) !== -1) return myOS;
-    return list[0];
-  }
+  var CATS = [
+    { id: "all", key: "catAll" },
+    { id: "software", key: "catSoftware" },
+    { id: "plugin", key: "catPlugin" },
+    { id: "luts", key: "catLuts" }
+  ];
+  function catOf(tool) { return tool.kategori || "software"; }
 
+  /* Satu tombol unduh per sistem operasi. Dua OS = dua tombol, satu OS = satu tombol "Download for <OS>".
+     OS milik pengunjung ditaruh paling atas. */
   function buildRow(tool, index) {
     var li = el("li", "row");
     var list = osList(tool);
+    var mine = myOS ? list.indexOf(myOS) : -1;
+    if (mine > 0) { list.splice(mine, 1); list.unshift(myOS); }
 
     var g = el("div");
     g.innerHTML = glyph(tool.nama);
@@ -1628,83 +1637,57 @@ const LINKS = [
     li.appendChild(info);
 
     var get = el("div", "get");
-    var btn = el("a", "btn");
-    btn.rel = "noopener";
-    var fine = el("p", "fine");
-    var sumHost = el("div");
-    var buttons = [];
-
-    function select(os) {
-      chosen[tool.nama] = os;
+    list.forEach(function (os) {
       var d = tool.unduhan[os];
+      var box = el("div", "dl");
+      var btn = el("a", "btn");
       btn.href = d.file;
+      btn.rel = "noopener";
       btn.setAttribute("aria-label", t("ariaDl", { name: tool.nama, os: os }));
       btn.innerHTML = "<span></span>" + ARROW;
       btn.firstChild.textContent = t("dl", { os: os });
-      fine.textContent = [os, tool.versi ? "v" + tool.versi : "", d.ukuran, ext(d.file)].filter(Boolean).join("  /  ");
-      sumHost.textContent = "";
+      box.appendChild(btn);
       if (d.sha256) {
         var det = el("details", "sum");
         det.appendChild(el("summary", null, "SHA-256"));
         det.appendChild(el("code", null, d.sha256));
-        sumHost.appendChild(det);
+        box.appendChild(det);
       }
-      buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.os === os)); });
-    }
-
-    if (list.length > 1) {
-      var seg = el("div", "os");
-      seg.setAttribute("role", "group");
-      seg.setAttribute("aria-label", t("ariaOs", { name: tool.nama }));
-      list.forEach(function (os) {
-        var b = el("button", null, os);
-        b.type = "button";
-        b.dataset.os = os;
-        b.addEventListener("click", function () { select(os); });
-        buttons.push(b);
-        seg.appendChild(b);
-      });
-      get.appendChild(seg);
-    } else {
-      get.appendChild(el("p", "os-one caps", t("only", { os: list[0] })));
-    }
-    get.appendChild(btn);
-    get.appendChild(fine);
-    get.appendChild(sumHost);
+      get.appendChild(box);
+    });
     li.appendChild(get);
-
-    select(startOS(tool));
     return li;
   }
 
   function renderList() {
     var q = qEl.value.trim().toLowerCase();
     listEl.textContent = "";
-    var shown = 0;
+    var shown = 0, inCat = 0;
     TOOLS.forEach(function (tool, i) {
       var list = osList(tool);
       if (!list.length) return;
-      var okOS = activeOS === "all" || list.indexOf(activeOS) !== -1;
+      if (activeCat !== "all" && catOf(tool) !== activeCat) return;
+      inCat++;
       var hay = (tool.nama + " " + descOf(tool) + " " + list.join(" ")).toLowerCase();
-      if (okOS && (!q || hay.indexOf(q) !== -1)) {
+      if (!q || hay.indexOf(q) !== -1) {
         listEl.appendChild(buildRow(tool, i));
         shown++;
       }
     });
+    emptyEl.textContent = t(inCat ? "empty" : "emptyCat");
     emptyEl.hidden = shown !== 0;
   }
 
   function renderChips() {
     chipsEl.textContent = "";
     chipsEl.setAttribute("aria-label", t("filter"));
-    [{ id: "all", label: t("all") }].concat(allOS().map(function (o) { return { id: o, label: o }; })).forEach(function (c) {
+    CATS.forEach(function (c) {
       var li = document.createElement("li");
-      var b = el("button", "chip", c.label);
+      var b = el("button", "chip", t(c.key));
       b.type = "button";
-      b.setAttribute("aria-pressed", String(c.id === activeOS));
+      b.setAttribute("aria-pressed", String(c.id === activeCat));
       b.addEventListener("click", function () {
-        activeOS = c.id;
-        chosen = {};
+        activeCat = c.id;
         renderChips();
         renderList();
       });
