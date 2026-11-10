@@ -279,22 +279,6 @@ html { scroll-padding-top: 5.5rem; }
   height: 100%;
   display: block;
 }
-.pin {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 2;
-  pointer-events: none;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  line-height: 1;
-  white-space: nowrap;
-  padding: 0.3rem 0.45rem;
-  color: var(--on-signal);
-  background: var(--signal);
-  will-change: transform;
-}
 .vert {
   position: absolute;
   z-index: 1;
@@ -840,6 +824,44 @@ footer a:hover { color: var(--fg); }
   :root { transition: none; }
   .row::before, .btn svg { transition: none; }
 }
+/* Kursor kotak: kursor asli diganti penanda kotak oranye (empat sudut) + titik kecil di ujung kursor.
+   Hanya untuk mouse. Kelasnya baru dipasang skrip setelah semuanya siap, jadi tanpa skrip kursor biasa tetap ada. */
+#ret, #retDot { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; opacity: 0; }
+#ret { width: 22px; height: 22px; will-change: transform, width, height; }
+#ret::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(var(--signal), var(--signal)) left top / 9px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left top / 1.5px 9px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right top / 9px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right top / 1.5px 9px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left bottom / 9px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) left bottom / 1.5px 9px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right bottom / 9px 1.5px no-repeat,
+    linear-gradient(var(--signal), var(--signal)) right bottom / 1.5px 9px no-repeat;
+}
+#retTag {
+  position: absolute;
+  left: calc(100% + 10px);
+  top: -9px;
+  white-space: nowrap;
+  padding: 0.28rem 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: var(--on-signal);
+  background: var(--signal);
+}
+#retTag[hidden] { display: none; }
+#ret.flip #retTag { left: auto; right: calc(100% + 10px); }
+#retDot { width: 5px; height: 5px; background: var(--signal); box-shadow: 0 0 0 1.5px var(--bg); }
+@media (hover: hover) and (pointer: fine) {
+  body.has-ret, body.has-ret * { cursor: none !important; }
+  body.has-ret input, body.has-ret textarea { cursor: text !important; }
+}
 </style>
 </head>
 <body>
@@ -864,7 +886,6 @@ footer a:hover { color: var(--fg); }
 
 <header class="hero" id="hero">
   <canvas id="dots" aria-hidden="true"></canvas>
-  <div class="pin" id="pin" aria-hidden="true">( 0 . 0 )</div>
   <p class="vert" aria-hidden="true" data-i18n="vert">&copy; 2026 Lebzy &mdash; Tool archive</p>
   <div class="wrap hero-inner">
     <p class="eyebrow caps" id="eyebrow">Tool catalog</p>
@@ -912,6 +933,9 @@ footer a:hover { color: var(--fg); }
   <button type="button" data-mode="dark" data-i18n="themeDark">Dark</button>
   <button type="button" data-mode="light" data-i18n="themeLight">Light</button>
 </div>
+
+<div id="ret" aria-hidden="true"><span id="retTag" hidden></span></div>
+<div id="retDot" aria-hidden="true"></div>
 
 <script>
 /* ============================================================
@@ -1319,7 +1343,6 @@ const LINKS = [
   var canvas = document.getElementById("dots");
   var ctx = canvas.getContext("2d");
   var hero = document.getElementById("hero");
-  var pin = document.getElementById("pin");
   var W = 0, H = 0, dpr = 1;
   var pointer = { x: 0, y: 0, on: false };
   var cur = { x: -1, y: -1 };
@@ -1428,22 +1451,13 @@ const LINKS = [
       glow(cx, p[0], p[1] === 1 ? 70 : 44, p[1] === 1 ? 0.6 : 0.4);
     });
 
-    ctx.strokeStyle = "rgb(" + C.signal + ")";
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(cx - 11, cy - 11, 22, 22);
-    var pw = pin.offsetWidth || 90, ph = pin.offsetHeight || 20;
-    var lx = cx + 64, ly = cy - 64;
-    if (lx + pw > W - 8) lx = cx - 64 - pw;
-    if (ly < ph) ly = cy + 64;
-    var fromRight = lx > cx;
-    var ax = fromRight ? lx : lx + pw;
-    ctx.beginPath();
-    ctx.moveTo(cx + (fromRight ? 11 : -11), cy + (ly < cy ? -11 : 11));
-    ctx.lineTo(ax, ly);
-    ctx.stroke();
-    pin.style.transform = "translate(" + lx.toFixed(1) + "px," + (ly - ph / 2).toFixed(1) + "px)";
-    var label = "( " + Math.round(cx) + " . " + Math.round(cy) + " )";
-    if (pin.textContent !== label) pin.textContent = label;
+    /* Kotak penanda: kalau mouse ada di hero, perannya diambil alih kursor kotak (#ret). Kotak ini hanya tampil
+       saat garis silang berjalan sendiri atau di layar sentuh. Tidak ada teks koordinat. */
+    if (!(pointer.on && window.lebzyRet)) {
+      ctx.strokeStyle = "rgb(" + C.signal + ")";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 11, cy - 11, 22, 22);
+    }
   }
 
   var lastDraw = 0;
@@ -1917,6 +1931,7 @@ const LINKS = [
       btn.setAttribute("aria-label", label);
       btn.innerHTML = "<span></span>" + ARROW;
       btn.firstChild.textContent = plain ? t("dlPlain") : t("dl", { os: os });
+      btn.setAttribute("data-tag", (plain ? t("dlPlain") : t("dlPlain") + " / " + os).toUpperCase());
       if (links.length > 1) {
         btn.addEventListener("click", function (e) {
           e.preventDefault();
@@ -2023,6 +2038,77 @@ const LINKS = [
     var b = e.target.closest("button[data-lang]");
     if (b) applyLang(b.dataset.lang, true);
   });
+
+  /* ---------- Kursor kotak (perpaduan opsi 1 dan 5): kursor asli diganti penanda kotak oranye yang menempel dan
+     menyesuaikan ukuran tombol atau tautan yang disentuh, lalu mengecil sebentar saat diklik. Di atasnya tetap ada
+     kisi + yang berputar jadi ×, cincin putus-putus, dan gelombang klik dari efek kisi. Hanya untuk mouse; layar
+     sentuh dan "kurangi gerakan" memakai kursor biasa. Tidak ada teks koordinat. Kolom teks memakai kursor teks. ---------- */
+  (function () {
+    if (reduce || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    var ret = document.getElementById("ret"), dot = document.getElementById("retDot"), tag = document.getElementById("retTag");
+    if (!ret || !dot || !tag) return;
+    var SEL = "a[href], button, summary, select, [role='button']", TEXT = "input, textarea";
+    var p = { x: -9999, y: -9999 }, box = { x: 0, y: 0, w: 22, h: 22 };
+    var ps = 1, power = 0, powerTgt = 0, hoverEl = null, textEl = false, pressed = false;
+    var inited = false, raf = 0, lastT = 0;
+
+    function pick(el) {
+      textEl = !!(el && el.closest && el.closest(TEXT));
+      hoverEl = (el && el.closest && !textEl) ? el.closest(SEL) : null;
+    }
+    function kick() { if (!raf) raf = requestAnimationFrame(frame); }
+    function frame(now) {
+      raf = 0;
+      var dt = Math.min(64, now - (lastT || now - 16));
+      lastT = now;
+      var tx, ty, tw, th, label = "";
+      if (hoverEl && document.body.contains(hoverEl)) {
+        var b = hoverEl.getBoundingClientRect();
+        tx = b.left - 5; ty = b.top - 5; tw = b.width + 10; th = b.height + 10;
+        label = hoverEl.getAttribute("data-tag") || "";
+      } else { tw = 22; th = 22; tx = p.x - 11; ty = p.y - 11; }
+      if (!inited) { box.x = tx; box.y = ty; box.w = tw; box.h = th; inited = true; }
+      var k = 1 - Math.exp(-dt / 55);
+      box.x += (tx - box.x) * k; box.y += (ty - box.y) * k;
+      box.w += (tw - box.w) * k; box.h += (th - box.h) * k;
+      var psT = pressed ? 0.86 : 1;
+      ps += (psT - ps) * (1 - Math.exp(-dt / 50));
+      power += (powerTgt - power) * (1 - Math.exp(-dt / 120));
+      var op = textEl ? 0 : power;
+      ret.style.opacity = op; dot.style.opacity = op;
+      if (tag.textContent !== label) { tag.textContent = label; tag.hidden = !label; }
+      ret.classList.toggle("flip", !!label && box.x + box.w + 14 + tag.offsetWidth > window.innerWidth);
+      ret.style.width = box.w.toFixed(1) + "px";
+      ret.style.height = box.h.toFixed(1) + "px";
+      ret.style.transform = "translate(" + box.x.toFixed(1) + "px," + box.y.toFixed(1) + "px) scale(" + ps.toFixed(3) + ")";
+      if (Math.abs(tx - box.x) > 0.3 || Math.abs(ty - box.y) > 0.3 || Math.abs(tw - box.w) > 0.3 || Math.abs(th - box.h) > 0.3 ||
+          Math.abs(psT - ps) > 0.003 || Math.abs(powerTgt - power) > 0.01) kick();
+    }
+
+    window.addEventListener("pointermove", function (e) {
+      if (e.pointerType !== "mouse") return;
+      p.x = e.clientX; p.y = e.clientY; powerTgt = 1;
+      dot.style.transform = "translate(" + (p.x - 2.5).toFixed(1) + "px," + (p.y - 2.5).toFixed(1) + "px)";
+      pick(e.target);
+      kick();
+    }, { passive: true });
+    window.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse") { pressed = true; kick(); } }, { passive: true });
+    window.addEventListener("pointerup", function () { pressed = false; kick(); }, { passive: true });
+    window.addEventListener("pointercancel", function () { pressed = false; kick(); }, { passive: true });
+    window.addEventListener("pointerout", function (e) {
+      if (!e.relatedTarget && e.pointerType === "mouse") { powerTgt = 0; hoverEl = null; kick(); }
+    });
+    window.addEventListener("blur", function () { powerTgt = 0; pressed = false; kick(); });
+    /* halaman bergulir tanpa gerak mouse: periksa ulang elemen di bawah kursor */
+    window.addEventListener("scroll", function () {
+      if (power < 0.01) return;
+      pick(document.elementFromPoint(p.x, p.y));
+      kick();
+    }, { passive: true });
+
+    window.lebzyRet = true;
+    document.body.classList.add("has-ret");   /* dipasang paling akhir, supaya kursor asli tidak hilang kalau ada yang gagal */
+  })();
 
   qEl.addEventListener("input", renderList);
   /* Kolom cari ada di header: kalau hasilnya belum terlihat (masih di hero atau sudah di bawah), geser ke katalog. */
