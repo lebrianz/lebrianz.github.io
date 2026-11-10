@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#D6DEE4">
 <title>Lebzy</title>
 <meta name="description" content="Tools by Lebzy for Windows, macOS, Linux and Android. Free to download, no ads.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0C0E'/%3E%3Ctext x='32' y='47' font-size='44' font-weight='800' text-anchor='middle' fill='%23ECECE8' font-family='Arial,Helvetica,sans-serif'%3EL%3C/text%3E%3Crect x='46' y='46' width='9' height='9' fill='%23FF5B1F'/%3E%3C/svg%3E">
 <script>
 /* terapkan tema dan bahasa tersimpan sebelum halaman pertama dicat, supaya tidak berkedip */
 try {
@@ -862,11 +863,11 @@ footer a:hover { color: var(--fg); }
    ============================================================ */
 const TOOLS = [
   {
-    nama: "Labzync",
+    nama: "LabZync",
     kategori: "software",
     deskripsi: {
-      en: "Synchronize your multicam footage.",
-      id: "Sinkronisasi footage multicam anda."
+      en: "Lab for synchronize your multicam footage.",
+      id: "Lab untuk sinkronisasi footage multicam anda."
     },
     unduhan: {
       "Windows": { file: "https://github.com/lebrianz/lebzync/raw/refs/heads/main/Labzync%20for%20Win/LabzyncWindows.exe?download=", ukuran: "116 MB" },
@@ -877,8 +878,8 @@ const TOOLS = [
     nama: "GriddddLabz",
     kategori: "software",
     deskripsi: {
-      en: "Make grids from photos or videos, as many as you want.",
-      id: "Buat grid dari foto dan video sebanyak yang kamu mau."
+      en: "Lab for make grids from photos or videos, as many as you want.",
+      id: "Lab untuk membuat grid dari foto dan video sebanyak yang kamu mau."
     },
     unduhan: {
       "Windows": { file: "https://github.com/lebrianz/gridlabz/raw/refs/heads/main/gridlabz.exe?download=" }
@@ -1031,6 +1032,116 @@ const LINKS = [
     });
     Promise.all(jobs).then(scramble);
   })();
+
+  /* ---------- Ikon di tab browser: huruf L yang berganti font, titik oranye berdenyut ----------
+     Browser tidak menganimasikan GIF untuk ikon tab (hanya Firefox), jadi ikonnya digambar ulang di canvas
+     dan diganti beberapa kali per detik. Berjalan di Chrome, Edge, dan Firefox; Safari bisa tetap diam. */
+  (function tabIcon() {
+    var FRAME_MS = 450;          /* jeda antar gambar ikon */
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = 64;
+    var g = cv.getContext("2d");
+    if (!g) return;
+    var n = 0, cur = document.querySelector('link[rel="icon"]');
+
+    function draw() {
+      var pool = FACES.filter(function (f) { return f.ok; });
+      var f = pool.length ? pool[n % pool.length] : FACES[0];
+      g.clearRect(0, 0, 64, 64);
+      g.fillStyle = "#0B0C0E";
+      g.beginPath();
+      if (g.roundRect) g.roundRect(0, 0, 64, 64, 14); else g.rect(0, 0, 64, 64);
+      g.fill();
+
+      var size = 46 * Math.min(f.sz, 1);
+      g.font = (f.st === "italic" ? "italic " : "") + f.w + " " + size + "px " + f.f + "," + f.fb;
+      g.textAlign = "center";
+      g.textBaseline = "alphabetic";
+      g.fillStyle = "#ECECE8";
+      var m = g.measureText("L");
+      var asc = m.actualBoundingBoxAscent || size * 0.72, desc = m.actualBoundingBoxDescent || 0;
+      var w = (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || m.width);
+      if (w > 44) { size = size * 44 / w; g.font = g.font.replace(/[\d.]+px/, size + "px"); }
+      g.fillText("L", 32, 32 + (asc - desc) / 2);
+
+      var pulse = n % 2 === 0;
+      g.fillStyle = "#FF5B1F";
+      var s = pulse ? 11 : 7;
+      g.fillRect(55 - s, 55 - s, s, s);
+      n++;
+      return cv.toDataURL("image/png");
+    }
+    function swap() {
+      var url = draw();
+      var l = document.createElement("link");
+      l.rel = "icon";
+      l.type = "image/png";
+      l.href = url;
+      if (cur && cur.parentNode) cur.parentNode.removeChild(cur);
+      document.head.appendChild(l);
+      cur = l;
+    }
+    if (reduce) return;
+    swap();
+    setInterval(swap, FRAME_MS);
+  })();
+
+  /* ---------- Judul tab: huruf-huruf Lebzy berganti gaya ----------
+     Judul tab memakai font browser yang tidak bisa diubah, jadi gantinya dipakai huruf Unicode bergaya
+     (tebal, miring, script, fraktur, monospace, dll). Dimulai setelah pengunjung pertama kali menyentuh
+     halaman, dan judul dikembalikan ke "Lebzy" saat halaman ditutup. */
+  (function tabTitle() {
+    if (reduce) return;
+    var WORD = "Lebzy", BASE_TITLE = "Lebzy", TICK_MS = 650;
+    /* [titik kode huruf besar A, titik kode huruf kecil a]; null = gunakan huruf biasa */
+    var STYLES = [
+      null,
+      [0x1D400, 0x1D41A], /* tebal */
+      [0x1D434, 0x1D44E], /* miring */
+      [0x1D468, 0x1D482], /* tebal miring */
+      [0x1D4D0, 0x1D4EA], /* script tebal */
+      [0x1D504, 0x1D51E], /* fraktur */
+      [0x1D538, 0x1D552], /* double-struck */
+      [0x1D56C, 0x1D586], /* fraktur tebal */
+      [0x1D5A0, 0x1D5BA], /* sans */
+      [0x1D5D4, 0x1D5EE], /* sans tebal */
+      [0x1D608, 0x1D622], /* sans miring */
+      [0x1D63C, 0x1D656], /* sans tebal miring */
+      [0x1D670, 0x1D68A]  /* monospace */
+    ];
+    function glyph(ch, style) {
+      var s = STYLES[style];
+      if (!s) return ch;
+      var up = ch >= "A" && ch <= "Z";
+      return String.fromCodePoint((up ? s[0] : s[1]) + (ch.charCodeAt(0) - (up ? 65 : 97)));
+    }
+    var last = [], timer = 0;
+    function tick() {
+      var out = "";
+      for (var i = 0; i < WORD.length; i++) {
+        var k, tries = 0;
+        do { k = Math.floor(Math.random() * STYLES.length); tries++; } while (k === last[i] && tries < 6);
+        last[i] = k;
+        out += glyph(WORD.charAt(i), k);
+      }
+      document.title = out;
+    }
+    function begin() {
+      ["pointermove", "pointerdown", "keydown", "scroll", "touchstart"].forEach(function (ev) { window.removeEventListener(ev, begin, true); });
+      if (timer) return;
+      tick();
+      timer = setInterval(tick, TICK_MS);
+    }
+    ["pointermove", "pointerdown", "keydown", "scroll", "touchstart"].forEach(function (ev) {
+      window.addEventListener(ev, begin, { capture: true, passive: true });
+    });
+    window.addEventListener("pagehide", function () {
+      clearInterval(timer);
+      timer = 0;
+      document.title = BASE_TITLE;
+    });
+  })();
+
   /* Laju pengacakan mengikuti kecepatan kursor: pelan = jarang berganti, cepat = berganti rapat.
      Kursor berhenti = font berhenti berganti. */
   if (!reduce) {
