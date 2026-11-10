@@ -1401,7 +1401,7 @@ const LINKS = [
     readColors();
     var tgt = pointer.on ? pointer : idleTarget(time);
     if (cur.x < 0 || reduce) { cur.x = tgt.x; cur.y = tgt.y; }
-    else { cur.x += (tgt.x - cur.x) * 0.14; cur.y += (tgt.y - cur.y) * 0.14; }
+    else { var kf = (pointer.on && window.lebzyRet) ? 0.7 : 0.14; cur.x += (tgt.x - cur.x) * kf; cur.y += (tgt.y - cur.y) * kf; }
     var cx = cur.x, cy = cur.y;
 
     ctx.clearRect(0, 0, W, H);
@@ -2048,9 +2048,9 @@ const LINKS = [
     var ret = document.getElementById("ret"), dot = document.getElementById("retDot"), tag = document.getElementById("retTag");
     if (!ret || !dot || !tag) return;
     var SEL = "a[href], button, summary, select, [role='button']", TEXT = "input, textarea";
-    var p = { x: -9999, y: -9999 }, box = { x: 0, y: 0, w: 22, h: 22 };
+    var p = { x: -9999, y: -9999 }, box = { x: 0, y: 0, w: 22, h: 22 }, er = { x: 0, y: 0, w: 22, h: 22 };
     var ps = 1, power = 0, powerTgt = 0, hoverEl = null, textEl = false, pressed = false;
-    var inited = false, raf = 0, lastT = 0;
+    var snap = 0, snapT = 0, raf = 0, lastT = 0;
 
     function pick(el) {
       textEl = !!(el && el.closest && el.closest(TEXT));
@@ -2061,16 +2061,20 @@ const LINKS = [
       raf = 0;
       var dt = Math.min(64, now - (lastT || now - 16));
       lastT = now;
-      var tx, ty, tw, th, label = "";
+      /* Posisi kotak = posisi mouse, tanpa jeda. Hanya perpindahan ke/dari tombol yang dihaluskan (snap 0..1). */
+      var label = "";
       if (hoverEl && document.body.contains(hoverEl)) {
         var b = hoverEl.getBoundingClientRect();
-        tx = b.left - 5; ty = b.top - 5; tw = b.width + 10; th = b.height + 10;
+        er.x = b.left - 5; er.y = b.top - 5; er.w = b.width + 10; er.h = b.height + 10;
         label = hoverEl.getAttribute("data-tag") || "";
-      } else { tw = 22; th = 22; tx = p.x - 11; ty = p.y - 11; }
-      if (!inited) { box.x = tx; box.y = ty; box.w = tw; box.h = th; inited = true; }
-      var k = 1 - Math.exp(-dt / 55);
-      box.x += (tx - box.x) * k; box.y += (ty - box.y) * k;
-      box.w += (tw - box.w) * k; box.h += (th - box.h) * k;
+        snapT = 1;
+      } else snapT = 0;
+      snap += (snapT - snap) * (1 - Math.exp(-dt / 60));
+      if (Math.abs(snapT - snap) < 0.01) snap = snapT;
+      var e = snap * snap * (3 - 2 * snap);
+      var fx = p.x - 11, fy = p.y - 11;
+      box.x = fx + (er.x - fx) * e; box.y = fy + (er.y - fy) * e;
+      box.w = 22 + (er.w - 22) * e; box.h = 22 + (er.h - 22) * e;
       var psT = pressed ? 0.86 : 1;
       ps += (psT - ps) * (1 - Math.exp(-dt / 50));
       power += (powerTgt - power) * (1 - Math.exp(-dt / 120));
@@ -2081,8 +2085,7 @@ const LINKS = [
       ret.style.width = box.w.toFixed(1) + "px";
       ret.style.height = box.h.toFixed(1) + "px";
       ret.style.transform = "translate(" + box.x.toFixed(1) + "px," + box.y.toFixed(1) + "px) scale(" + ps.toFixed(3) + ")";
-      if (Math.abs(tx - box.x) > 0.3 || Math.abs(ty - box.y) > 0.3 || Math.abs(tw - box.w) > 0.3 || Math.abs(th - box.h) > 0.3 ||
-          Math.abs(psT - ps) > 0.003 || Math.abs(powerTgt - power) > 0.01) kick();
+      if (snap !== snapT || Math.abs(psT - ps) > 0.003 || Math.abs(powerTgt - power) > 0.01) kick();
     }
 
     window.addEventListener("pointermove", function (e) {
