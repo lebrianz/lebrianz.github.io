@@ -824,10 +824,9 @@ footer a:hover { color: var(--fg); }
   :root { transition: none; }
   .row::before, .btn svg { transition: none; }
 }
-/* Kursor kotak: kursor asli diganti penanda kotak oranye (empat sudut) + titik kecil di ujung kursor.
-   Hanya untuk mouse. Kelasnya baru dipasang skrip setelah semuanya siap, jadi tanpa skrip kursor biasa tetap ada. */
-#ret, #retDot { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; opacity: 0; }
-#ret { width: 22px; height: 22px; will-change: transform, width, height; }
+/* Penanda tombol: kursor tetap kursor asli. Saat menyentuh tombol/tautan, empat sudut oranye muncul dari ujung
+   kursor lalu melebar menempel ke elemen itu. */
+#ret { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; opacity: 0; width: 22px; height: 22px; will-change: transform, width, height; }
 #ret::before {
   content: "";
   position: absolute;
@@ -857,11 +856,6 @@ footer a:hover { color: var(--fg); }
 }
 #retTag[hidden] { display: none; }
 #ret.flip #retTag { left: auto; right: calc(100% + 10px); }
-#retDot { width: 5px; height: 5px; background: var(--signal); box-shadow: 0 0 0 1.5px var(--bg); }
-@media (hover: hover) and (pointer: fine) {
-  body.has-ret, body.has-ret * { cursor: none !important; }
-  body.has-ret input, body.has-ret textarea { cursor: text !important; }
-}
 </style>
 </head>
 <body>
@@ -935,7 +929,6 @@ footer a:hover { color: var(--fg); }
 </div>
 
 <div id="ret" aria-hidden="true"><span id="retTag" hidden></span></div>
-<div id="retDot" aria-hidden="true"></div>
 
 <script>
 /* ============================================================
@@ -1401,7 +1394,7 @@ const LINKS = [
     readColors();
     var tgt = pointer.on ? pointer : idleTarget(time);
     if (cur.x < 0 || reduce) { cur.x = tgt.x; cur.y = tgt.y; }
-    else { var kf = (pointer.on && window.lebzyRet) ? 0.7 : 0.14; cur.x += (tgt.x - cur.x) * kf; cur.y += (tgt.y - cur.y) * kf; }
+    else { var kf = pointer.on ? 0.7 : 0.14;   /* mengikuti mouse nyaris tanpa jeda; berjalan sendiri tetap pelan */ cur.x += (tgt.x - cur.x) * kf; cur.y += (tgt.y - cur.y) * kf; }
     var cx = cur.x, cy = cur.y;
 
     ctx.clearRect(0, 0, W, H);
@@ -1451,13 +1444,10 @@ const LINKS = [
       glow(cx, p[0], p[1] === 1 ? 70 : 44, p[1] === 1 ? 0.6 : 0.4);
     });
 
-    /* Kotak penanda: kalau mouse ada di hero, perannya diambil alih kursor kotak (#ret). Kotak ini hanya tampil
-       saat garis silang berjalan sendiri atau di layar sentuh. Tidak ada teks koordinat. */
-    if (!(pointer.on && window.lebzyRet)) {
-      ctx.strokeStyle = "rgb(" + C.signal + ")";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx - 11, cy - 11, 22, 22);
-    }
+    /* Kotak penanda di titik silang garis (tanpa teks koordinat). */
+    ctx.strokeStyle = "rgb(" + C.signal + ")";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cx - 11, cy - 11, 22, 22);
   }
 
   var lastDraw = 0;
@@ -2039,78 +2029,73 @@ const LINKS = [
     if (b) applyLang(b.dataset.lang, true);
   });
 
-  /* ---------- Kursor kotak (perpaduan opsi 1 dan 5): kursor asli diganti penanda kotak oranye yang menempel dan
-     menyesuaikan ukuran tombol atau tautan yang disentuh, lalu mengecil sebentar saat diklik. Di atasnya tetap ada
-     kisi + yang berputar jadi ×, cincin putus-putus, dan gelombang klik dari efek kisi. Hanya untuk mouse; layar
-     sentuh dan "kurangi gerakan" memakai kursor biasa. Tidak ada teks koordinat. Kolom teks memakai kursor teks. ---------- */
+  /* ---------- Penanda tombol: kursor tetap kursor asli. Saat kursor menyentuh tombol atau tautan, empat sudut oranye
+     muncul dari ujung kursor lalu melebar menempel ke elemen itu (dan menciut lagi saat keluar); klik mengecilkannya
+     sedikit. Dipakai bersama efek kisi + / × di latar. Hanya untuk mouse. Tidak ada teks koordinat. ---------- */
   (function () {
     if (reduce || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-    var ret = document.getElementById("ret"), dot = document.getElementById("retDot"), tag = document.getElementById("retTag");
-    if (!ret || !dot || !tag) return;
-    var SEL = "a[href], button, summary, select, [role='button']", TEXT = "input, textarea";
-    var p = { x: -9999, y: -9999 }, box = { x: 0, y: 0, w: 22, h: 22 }, er = { x: 0, y: 0, w: 22, h: 22 };
-    var ps = 1, power = 0, powerTgt = 0, hoverEl = null, textEl = false, pressed = false;
+    var ret = document.getElementById("ret"), tag = document.getElementById("retTag");
+    if (!ret || !tag) return;
+    var SEL = "a[href], button, summary, select, [role='button']";
+    var p = { x: -9999, y: -9999 }, box = { x: 0, y: 0, w: 22, h: 22 }, ec = { x: 0, y: 0, w: 22, h: 22 };
+    var ps = 1, pressed = false, hoverEl = null, wasHover = false;
     var snap = 0, snapT = 0, raf = 0, lastT = 0;
 
-    function pick(el) {
-      textEl = !!(el && el.closest && el.closest(TEXT));
-      hoverEl = (el && el.closest && !textEl) ? el.closest(SEL) : null;
-    }
     function kick() { if (!raf) raf = requestAnimationFrame(frame); }
     function frame(now) {
       raf = 0;
       var dt = Math.min(64, now - (lastT || now - 16));
       lastT = now;
-      /* Posisi kotak = posisi mouse, tanpa jeda. Hanya perpindahan ke/dari tombol yang dihaluskan (snap 0..1). */
-      var label = "";
+      var label = "", again = false;
       if (hoverEl && document.body.contains(hoverEl)) {
         var b = hoverEl.getBoundingClientRect();
-        er.x = b.left - 5; er.y = b.top - 5; er.w = b.width + 10; er.h = b.height + 10;
+        var tx = b.left - 5, ty = b.top - 5, tw = b.width + 10, th = b.height + 10;
+        if (!wasHover) { ec.x = tx; ec.y = ty; ec.w = tw; ec.h = th; }
+        else {
+          var kk = 1 - Math.exp(-dt / 40);   /* meluncur halus saat pindah dari satu tombol ke tombol lain */
+          ec.x += (tx - ec.x) * kk; ec.y += (ty - ec.y) * kk; ec.w += (tw - ec.w) * kk; ec.h += (th - ec.h) * kk;
+          if (Math.abs(tx - ec.x) > 0.3 || Math.abs(ty - ec.y) > 0.3 || Math.abs(tw - ec.w) > 0.3 || Math.abs(th - ec.h) > 0.3) again = true;
+        }
+        wasHover = true; snapT = 1;
         label = hoverEl.getAttribute("data-tag") || "";
-        snapT = 1;
-      } else snapT = 0;
+      } else { wasHover = false; snapT = 0; }
       snap += (snapT - snap) * (1 - Math.exp(-dt / 60));
       if (Math.abs(snapT - snap) < 0.01) snap = snapT;
       var e = snap * snap * (3 - 2 * snap);
       var fx = p.x - 11, fy = p.y - 11;
-      box.x = fx + (er.x - fx) * e; box.y = fy + (er.y - fy) * e;
-      box.w = 22 + (er.w - 22) * e; box.h = 22 + (er.h - 22) * e;
+      box.x = fx + (ec.x - fx) * e; box.y = fy + (ec.y - fy) * e;
+      box.w = 22 + (ec.w - 22) * e; box.h = 22 + (ec.h - 22) * e;
       var psT = pressed ? 0.86 : 1;
       ps += (psT - ps) * (1 - Math.exp(-dt / 50));
-      power += (powerTgt - power) * (1 - Math.exp(-dt / 120));
-      var op = textEl ? 0 : power;
-      ret.style.opacity = op; dot.style.opacity = op;
+      ret.style.opacity = e.toFixed(3);
       if (tag.textContent !== label) { tag.textContent = label; tag.hidden = !label; }
       ret.classList.toggle("flip", !!label && box.x + box.w + 14 + tag.offsetWidth > window.innerWidth);
       ret.style.width = box.w.toFixed(1) + "px";
       ret.style.height = box.h.toFixed(1) + "px";
       ret.style.transform = "translate(" + box.x.toFixed(1) + "px," + box.y.toFixed(1) + "px) scale(" + ps.toFixed(3) + ")";
-      if (snap !== snapT || Math.abs(psT - ps) > 0.003 || Math.abs(powerTgt - power) > 0.01) kick();
+      if (again || snap !== snapT || Math.abs(psT - ps) > 0.003) kick();
     }
+    function pick(el) { hoverEl = (el && el.closest) ? el.closest(SEL) : null; }
 
     window.addEventListener("pointermove", function (e) {
       if (e.pointerType !== "mouse") return;
-      p.x = e.clientX; p.y = e.clientY; powerTgt = 1;
-      dot.style.transform = "translate(" + (p.x - 2.5).toFixed(1) + "px," + (p.y - 2.5).toFixed(1) + "px)";
+      p.x = e.clientX; p.y = e.clientY;
       pick(e.target);
-      kick();
+      if (hoverEl || snap > 0) kick();
     }, { passive: true });
     window.addEventListener("pointerdown", function (e) { if (e.pointerType === "mouse") { pressed = true; kick(); } }, { passive: true });
     window.addEventListener("pointerup", function () { pressed = false; kick(); }, { passive: true });
     window.addEventListener("pointercancel", function () { pressed = false; kick(); }, { passive: true });
     window.addEventListener("pointerout", function (e) {
-      if (!e.relatedTarget && e.pointerType === "mouse") { powerTgt = 0; hoverEl = null; kick(); }
+      if (!e.relatedTarget && e.pointerType === "mouse") { hoverEl = null; kick(); }
     });
-    window.addEventListener("blur", function () { powerTgt = 0; pressed = false; kick(); });
+    window.addEventListener("blur", function () { hoverEl = null; pressed = false; kick(); });
     /* halaman bergulir tanpa gerak mouse: periksa ulang elemen di bawah kursor */
     window.addEventListener("scroll", function () {
-      if (power < 0.01) return;
+      if (p.x < -999) return;
       pick(document.elementFromPoint(p.x, p.y));
-      kick();
+      if (hoverEl || snap > 0) kick();
     }, { passive: true });
-
-    window.lebzyRet = true;
-    document.body.classList.add("has-ret");   /* dipasang paling akhir, supaya kursor asli tidak hilang kalau ada yang gagal */
   })();
 
   qEl.addEventListener("input", renderList);
