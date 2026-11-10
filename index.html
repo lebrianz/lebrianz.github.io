@@ -208,7 +208,18 @@ html { scroll-padding-top: 5.5rem; }
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
 }
-.top > .mark, .top > .ctrls { position: relative; z-index: 2; }
+.top > .mark, .top > .ctrls, .top > .search { position: relative; z-index: 2; }
+/* kolom cari di dalam header: di desktop mengisi ruang di antara logo dan pilihan bahasa */
+.top > .search { flex: 0 1 22rem; width: auto; margin-left: auto; }
+.top .search input {
+  min-height: 38px;
+  padding: 0.45rem 0.8rem;
+  border-color: color-mix(in srgb, var(--fg) 18%, transparent);
+  background: color-mix(in srgb, var(--bg) 10%, transparent);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;                /* kapsul header sudah memburamkan latar; blur kedua tidak berlaku di dalamnya */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--rim) 70%, transparent);
+}
 .top .mark {
   font-family: var(--font-display);
   font-stretch: 125%;
@@ -564,11 +575,12 @@ h2 {
   border-top: 1px solid var(--fg);
   padding-block: 2rem 2.5rem;
 }
-.note .wrap {
+.note-glass {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.5rem clamp(1.5rem, 5vw, 4rem);
   align-items: start;
+  padding: clamp(1.1rem, 3vw, 1.75rem);
 }
 .note h2 { font-size: clamp(1.1rem, 2.4vw, 1.5rem); grid-column: 1 / -1; }
 .justify {
@@ -588,8 +600,10 @@ h2 {
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   line-height: 1.7;
-  border: 1px solid var(--ctl);
+  border: 1px solid color-mix(in srgb, var(--fg) 16%, transparent);
   border-radius: 2px;
+  background: color-mix(in srgb, var(--fg) 5%, transparent);
+  box-shadow: inset 0 1px 3px color-mix(in srgb, var(--fg) 12%, transparent), 0 1px 0 color-mix(in srgb, var(--rim) 60%, transparent);
 }
 .cmd b { display: inline-block; min-width: 5.5rem; font-weight: 500; color: var(--muted); }
 
@@ -599,7 +613,45 @@ footer {
   color: var(--muted);
   font-size: 0.9375rem;
 }
-/* footer: panel kaca bening, gayanya sama dengan kotak aplikasi di atasnya */
+/* Panel kaca cair untuk catatan dan footer. Supaya kacanya benar-benar terlihat, di belakang tiap bagian ada
+   cahaya oranye dan biru yang lembut; panel memburamkan dan membiaskannya, ditambah kilau diagonal dan pantulan di tepi. */
+.note, footer { position: relative; }
+.note::before, footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(closest-side at 14% 55%, color-mix(in srgb, var(--signal) 34%, transparent), transparent),
+    radial-gradient(closest-side at 86% 45%, color-mix(in srgb, var(--blue) 30%, transparent), transparent);
+}
+footer::before {
+  background:
+    radial-gradient(closest-side at 80% 40%, color-mix(in srgb, var(--signal) 30%, transparent), transparent),
+    radial-gradient(closest-side at 18% 60%, color-mix(in srgb, var(--blue) 28%, transparent), transparent);
+}
+.note-glass, .foot-glass {
+  position: relative;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--fg) 14%, var(--rim));
+  background:
+    linear-gradient(115deg,
+      color-mix(in srgb, var(--rim) 70%, transparent) 0%,
+      color-mix(in srgb, var(--rim) 8%, transparent) 30%,
+      transparent 58%,
+      color-mix(in srgb, var(--rim) 26%, transparent) 100%),
+    color-mix(in srgb, var(--bg) 10%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.9) brightness(1.07);
+  backdrop-filter: blur(14px) saturate(1.9) brightness(1.07);
+  box-shadow:
+    inset 0 1px 0 var(--rim),                                                  /* tepi atas memantulkan cahaya */
+    inset 1px 0 0 color-mix(in srgb, var(--rim) 45%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--fg) 8%, transparent),
+    inset 0 0 26px -6px color-mix(in srgb, var(--rim) 55%, transparent),     /* cahaya di dalam kaca */
+    0 14px 36px rgba(0, 0, 0, 0.13),
+    0 1px 3px rgba(0, 0, 0, 0.10);
+}
 .foot-glass {
   display: flex;
   flex-wrap: wrap;
@@ -607,18 +659,6 @@ footer {
   justify-content: space-between;
   gap: 0.75rem 2rem;
   padding: 1rem 1.25rem;
-  border-radius: 3px;
-  border: 1px solid color-mix(in srgb, var(--fg) 12%, transparent);
-  background:
-    linear-gradient(160deg, color-mix(in srgb, var(--rim) 45%, transparent), transparent 50%),
-    color-mix(in srgb, var(--bg) 12%, transparent);
-  -webkit-backdrop-filter: blur(9px) saturate(1.7) brightness(1.05);
-  backdrop-filter: blur(9px) saturate(1.7) brightness(1.05);
-  box-shadow:
-    inset 0 1px 0 var(--rim),
-    inset 1px 0 0 color-mix(in srgb, var(--rim) 45%, transparent),
-    inset 0 10px 14px -10px color-mix(in srgb, var(--rim) 80%, transparent),
-    0 6px 18px rgba(0, 0, 0, 0.08);
 }
 footer ul { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin: 0; padding: 0; list-style: none; }
 footer a { text-underline-offset: 3px; }
@@ -718,30 +758,31 @@ footer a:hover { color: var(--fg); }
   .seg, .chip, .os button, .search input { background: color-mix(in srgb, var(--bg) 88%, transparent); }
   .btn { background: color-mix(in srgb, var(--signal) 20%, var(--bg)); }
   .row::after { background: color-mix(in srgb, var(--bg) 70%, transparent); }
-  .foot-glass { background: color-mix(in srgb, var(--bg) 78%, transparent); }
+  .note-glass, .foot-glass { background: color-mix(in srgb, var(--bg) 78%, transparent); }
 }
 @media (prefers-reduced-transparency: reduce) {
   .seg, .chip, .os button, .search input { background: color-mix(in srgb, var(--bg) 92%, transparent); }
   .btn { background: color-mix(in srgb, var(--signal) 20%, var(--bg)); }
   .row::after { background: color-mix(in srgb, var(--bg) 80%, transparent); }
-  .foot-glass { background: color-mix(in srgb, var(--bg) 88%, transparent); }
-  .seg, .chip, .os button, .search input, .btn, .row::after, .foot-glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .note-glass, .foot-glass { background: color-mix(in srgb, var(--bg) 88%, transparent); }
+  .seg, .chip, .os button, .search input, .btn, .row::after, .note-glass, .foot-glass { -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
 @media (max-width: 760px) {
   .row { grid-template-columns: 4rem minmax(0, 1fr); padding: 1.3rem 0.5rem; gap: 0.9rem 1rem; }
   .glyph { width: 4rem; height: 4rem; }
   .get { grid-column: 1 / -1; }
-  .note .wrap { grid-template-columns: minmax(0, 1fr); }
+  .note-glass { grid-template-columns: minmax(0, 1fr); }
   .vert { display: none; }
 
   .catalog-head { align-items: stretch; }
-  .search { width: 100%; }
   .justify { text-align: left; hyphens: none; }
   .os button { flex: 1 1 auto; }
 }
 @media (max-width: 560px) {
   .site-head { padding-block: 8px; }
-  .top { padding: 0.4rem 0.45rem 0.4rem 1rem; }
+  .top { padding: 0.4rem 0.45rem 0.4rem 1rem; gap: 0.4rem 0.6rem; }
+  .top > .search { flex: 1 1 7rem; min-width: 0; max-width: none; margin-left: 0; }
+  .top .search input { padding-inline: 0.65rem; text-overflow: ellipsis; }
   html { scroll-padding-top: 4.5rem; }
   .seg button { padding-inline: 0.65rem; }
 
@@ -808,6 +849,10 @@ footer a:hover { color: var(--fg); }
   <div class="top" id="top">
     <canvas class="top-dots" id="topDots" aria-hidden="true"></canvas>
     <a class="mark" href="#atas" id="atas">Lebzy&reg;</a>
+    <div class="search">
+      <label for="q" hidden data-i18n="searchLabel">Search tools</label>
+      <input id="q" type="search" data-i18n-ph="search" placeholder="Search by name or purpose" autocomplete="off">
+    </div>
     <div class="ctrls">
       <div class="seg" id="langSeg" role="group" data-i18n-aria="lang" aria-label="Language">
         <button type="button" data-lang="en" lang="en">EN</button>
@@ -835,10 +880,6 @@ footer a:hover { color: var(--fg); }
       <p class="caps" data-i18n="catalog">Catalog</p>
       <h2 data-i18n="allTools">All tools</h2>
     </div>
-    <div class="search">
-      <label for="q" hidden data-i18n="searchLabel">Search tools</label>
-      <input id="q" type="search" data-i18n-ph="search" placeholder="Search by name or purpose" autocomplete="off">
-    </div>
   </div>
   <ul class="chips" id="chips"></ul>
   <ol class="list" id="list"></ol>
@@ -847,11 +888,13 @@ footer a:hover { color: var(--fg); }
 
 <section class="note" aria-labelledby="cek">
   <div class="wrap">
+   <div class="note-glass">
     <h2 id="cek" data-i18n="noteTitle">Check the file before opening</h2>
     <p class="justify" data-i18n="noteText">These tools are free. Pick your operating system, download, and run. Small apps are often flagged by Windows or macOS as coming from an unknown publisher. That is expected, but compare the file's SHA-256 checksum with the one shown on this page before you open it.</p>
     <pre class="cmd"><b>Windows</b>certutil -hashfile FILE_NAME SHA256
 <b>macOS</b>shasum -a 256 FILE_NAME
 <b>Linux</b>sha256sum FILE_NAME</pre>
+   </div>
   </div>
 </section>
 
@@ -918,7 +961,7 @@ const TOOLS = [
     }
   },
   {
-    nama: "FilmLabz+ Film Simulator",
+    nama: "Film Labz+ Film Simulator",
     kategori: "plugin",
     deskripsi: {
       en: "Film look simulator for DaVinci Resolve.",
@@ -1982,6 +2025,13 @@ const LINKS = [
   });
 
   qEl.addEventListener("input", renderList);
+  /* Kolom cari ada di header: kalau hasilnya belum terlihat (masih di hero atau sudah di bawah), geser ke katalog. */
+  var toolsEl = document.getElementById("tools");
+  qEl.addEventListener("input", function () {
+    if (!toolsEl) return;
+    var r = toolsEl.getBoundingClientRect();
+    if (r.top > 140 || r.bottom < 200) toolsEl.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  });
   renderLinks();
   applyLang(lang, false);
   applyMode(mode, false);
