@@ -853,7 +853,7 @@ footer a:hover { color: var(--fg); }
    Tiap tools punya:
      nama      : nama tools
      deskripsi : teks biasa (dipakai untuk semua bahasa) ATAU { en: "...", id: "..." }
-     versi     : misalnya "1.2.0"
+     versi     : opsional, misalnya "1.2.0" (hapus baris ini kalau tidak mau menampilkan versi)
      unduhan   : satu entri per sistem operasi (Windows, macOS, Linux, Android, atau nama lain)
                  file   : link langsung ke file (misalnya dari GitHub Releases)
                  ukuran : teks bebas, misalnya "2,1 MB"
@@ -864,67 +864,23 @@ const TOOLS = [
   {
     nama: "Labzync",
     deskripsi: {
-      en: "Syncronize your multicam footages",
+      en: "Synchronize your multicam footage.",
       id: "Sinkronisasi footage multicam anda."
     },
-    versi: "1.2.0",
     unduhan: {
-      "Windows": { file: "https://github.com/lebrianz/lebzync/raw/refs/heads/main/Labzync%20for%20Win/LabzyncWindows.exe?download=", ukuran: "116 MB", sha256: "0000000000000000000000000000000000000000000000000000000000000000" },
-      "macOS":   { file: "https://github.com/lebrianz/lebzync/raw/refs/heads/main/Labzync%20for%20Mac/LabzyncMac.dmg?download=", ukuran: "119 MB" },
-      "Linux":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/batch-renamer-linux.AppImage", ukuran: "3.0 MB" }
-    },
-    contoh: true
+      "Windows": { file: "https://github.com/lebrianz/lebzync/raw/refs/heads/main/Labzync%20for%20Win/LabzyncWindows.exe?download=", ukuran: "116 MB" },
+      "macOS":   { file: "https://github.com/lebrianz/lebzync/raw/refs/heads/main/Labzync%20for%20Mac/LabzyncMac.dmg?download=", ukuran: "119 MB" }
+    }
   },
   {
-    nama: "Catat Cepat",
+    nama: "GriddddLabz",
     deskripsi: {
-      en: "A one-screen notes app. Open it, type, done. No account and no internet needed.",
-      id: "Aplikasi catatan satu layar. Buka, ketik, selesai, tanpa akun dan tanpa internet."
+      en: "Make grids from photos or videos, as many as you want.",
+      id: "Buat grid dari foto dan video sebanyak yang kamu mau."
     },
-    versi: "0.9.4",
     unduhan: {
-      "Android": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/catat-cepat.apk", ukuran: "8.4 MB" }
-    },
-    contoh: true
-  },
-  {
-    nama: "Pemisah PDF",
-    deskripsi: {
-      en: "Split one PDF into several files by page number, right on your computer.",
-      id: "Pecah satu PDF menjadi beberapa file berdasarkan nomor halaman, langsung dari komputer kamu."
-    },
-    versi: "1.0.1",
-    unduhan: {
-      "Windows": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/pemisah-pdf-win.zip", ukuran: "5.7 MB" },
-      "macOS":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/pemisah-pdf-mac.dmg", ukuran: "6.1 MB" }
-    },
-    contoh: true
-  },
-  {
-    nama: "Log Rapih",
-    deskripsi: {
-      en: "A terminal script that tidies and sorts long log files into a summary that is easy to read.",
-      id: "Skrip terminal yang merapikan dan mengurutkan file log panjang menjadi ringkasan yang mudah dibaca."
-    },
-    versi: "2.0.0",
-    unduhan: {
-      "macOS": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/log-rapih-mac.tar.gz", ukuran: "148 KB" },
-      "Linux": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/log-rapih-linux.tar.gz", ukuran: "142 KB" }
-    },
-    contoh: true
-  },
-  {
-    nama: "Palet Warna",
-    deskripsi: {
-      en: "Pull the five dominant colors from any image and copy their hex codes with one click.",
-      id: "Ambil lima warna dominan dari gambar apa pun dan salin kode hex-nya dengan satu klik."
-    },
-    versi: "1.1.0",
-    unduhan: {
-      "Windows": { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/palet-warna-win.zip", ukuran: "3.0 MB" },
-      "macOS":   { file: "https://github.com/lebrianz/tools-lebzy/releases/latest/download/palet-warna-mac.dmg", ukuran: "3.3 MB" }
-    },
-    contoh: true
+      "Windows": { file: "https://github.com/lebrianz/gridlabz/raw/refs/heads/main/gridlabz.exe?download=" }
+    }
   }
 ];
 
@@ -1664,7 +1620,7 @@ const LINKS = [
     li.appendChild(g.firstChild);
 
     var info = el("div", "info");
-    info.appendChild(el("p", "id caps", "LBZ-" + pad(index + 1) + " / v" + tool.versi));
+    info.appendChild(el("p", "id caps", "LBZ-" + pad(index + 1) + (tool.versi ? " / v" + tool.versi : "")));
     var h = el("h3", null, tool.nama);
     if (tool.contoh) h.appendChild(el("span", "tag", t("example")));
     info.appendChild(h);
@@ -1685,7 +1641,7 @@ const LINKS = [
       btn.setAttribute("aria-label", t("ariaDl", { name: tool.nama, os: os }));
       btn.innerHTML = "<span></span>" + ARROW;
       btn.firstChild.textContent = t("dl", { os: os });
-      fine.textContent = [os, "v" + tool.versi, d.ukuran, ext(d.file)].filter(Boolean).join("  /  ");
+      fine.textContent = [os, tool.versi ? "v" + tool.versi : "", d.ukuran, ext(d.file)].filter(Boolean).join("  /  ");
       sumHost.textContent = "";
       if (d.sha256) {
         var det = el("details", "sum");
